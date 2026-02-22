@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cordialito — Panel de Agentes</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg0:#060B14; --bg1:#0A1020; --bg2:#0F1827; --bg3:#162033;
+  --bg4:#1D2B40; --bg5:#253550;
+  --gold:#F0B429; --gold2:#FFD166; --gold-dim:rgba(240,180,41,0.15);
+  --green:#00E87A; --green-dim:rgba(0,232,122,0.12);
+  --red:#FF4757; --red-dim:rgba(255,71,87,0.12);
+  --blue:#3B82F6; --blue-dim:rgba(59,130,246,0.12);
+  --orange:#FF8C00; --orange-dim:rgba(255,140,0,0.12);
+  --purple:#A855F7; --purple-dim:rgba(168,85,247,0.12);
+  --white:#E8EDF5; --gray:#7A8BA0; --gray2:#4A5568;
+  --border:rgba(255,255,255,0.07); --border-gold:rgba(240,180,41,0.25);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{height:100%;}
+body{font-family:'Inter',sans-serif;background:var(--bg0);color:var(--white);height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ── LOGIN ── */
+#loginScreen{position:fixed;inset:0;background:var(--bg0);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-box{background:var(--bg2);border:1px solid var(--border-gold);border-radius:16px;padding:40px 36px;width:340px;text-align:center;}
+.login-logo{width:52px;height:52px;background:linear-gradient(135deg,var(--gold),#C97D0E);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:24px;color:#060B14;margin:0 auto 14px;box-shadow:0 0 30px rgba(240,180,41,0.3);}
+.login-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--white);margin-bottom:4px;}
+.login-title span{color:var(--gold);}
+.login-sub{font-size:12px;color:var(--gray);margin-bottom:28px;}
+.login-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--white);font-family:'Inter',sans-serif;margin-bottom:10px;outline:none;transition:border-color 0.2s;}
+.login-input:focus{border-color:var(--border-gold);}
+.login-input::placeholder{color:var(--gray);}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--gold),#C97D0E);border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:800;color:#060B14;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px;transition:all 0.2s;}
+.login-btn:hover{box-shadow:0 4px 20px rgba(240,180,41,0.35);}
+.login-err{font-size:12px;color:var(--red);margin-top:8px;display:none;}
+
+/* ── TOPBAR ── */
+.topbar{height:54px;background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;}
+.topbar-logo{display:flex;align-items:center;gap:8px;}
+.topbar-logo .mark{width:30px;height:30px;background:linear-gradient(135deg,var(--gold),#C97D0E);border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:15px;color:#060B14;}
+.topbar-logo .txt{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;}
+.topbar-logo .txt span{color:var(--gold);}
+.topbar-sep{width:1px;height:24px;background:var(--border);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+
+/* Agent status dropdown */
+.status-selector{position:relative;}
+.status-btn{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:12px;font-weight:600;color:var(--white);font-family:'Inter',sans-serif;transition:all 0.2s;}
+.status-btn:hover{border-color:rgba(255,255,255,0.15);}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.status-dot.online{background:var(--green);}
+.status-dot.away{background:var(--gold);}
+.status-dot.busy{background:var(--red);}
+.status-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;min-width:150px;z-index:200;display:none;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.status-dropdown.open{display:block;}
+.status-option{display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;font-size:13px;font-weight:500;transition:background 0.15s;}
+.status-option:hover{background:var(--bg4);}
+
+/* Sound toggle */
+.sound-btn{width:32px;height:32px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all 0.15s;position:relative;}
+.sound-btn:hover{border-color:rgba(255,255,255,0.15);}
+.sound-btn.muted::after{content:'';position:absolute;width:2px;height:20px;background:var(--red);transform:rotate(45deg);border-radius:2px;}
+
+.agent-name-tag{font-size:12px;font-weight:600;color:var(--gray);background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 10px;}
+.agent-name-tag span{color:var(--white);}
+.logout-btn{background:var(--red-dim);border:1px solid rgba(255,71,87,0.25);border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
+.logout-btn:hover{background:rgba(255,71,87,0.2);}
+
+/* ── MAIN ── */
+.main-panel{display:flex;flex:1;overflow:hidden;}
+
+/* ── LEFT: CONV LIST ── */
+.conv-list{width:270px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.conv-list-header{padding:12px 14px 0;border-bottom:1px solid var(--border);flex-shrink:0;}
+.conv-list-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:10px;}
+
+/* Filter tabs */
+.filter-tabs{display:flex;gap:2px;margin-bottom:0;}
+.filter-tab{flex:1;padding:7px 6px;text-align:center;font-size:11px;font-weight:600;color:var(--gray2);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;}
+.filter-tab:hover{color:var(--gray);}
+.filter-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.filter-tab .tab-count{display:inline-block;background:var(--bg4);border-radius:10px;padding:1px 5px;font-size:10px;margin-left:3px;}
+.filter-tab.active .tab-count{background:var(--gold-dim);color:var(--gold);}
+
+.conv-search-wrap{padding:10px 14px;border-bottom:1px solid var(--border);}
+.conv-search{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 12px;font-size:13px;color:var(--white);font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;}
+.conv-search:focus{border-color:var(--border-gold);}
+.conv-search::placeholder{color:var(--gray2);}
+
+.conv-items{flex:1;overflow-y:auto;}
+.conv-items::-webkit-scrollbar{width:3px;}
+.conv-items::-webkit-scrollbar-thumb{background:var(--bg4);}
+
+.conv-item{padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;display:flex;align-items:flex-start;gap:9px;position:relative;}
+.conv-item:hover{background:var(--bg2);}
+.conv-item.active{background:var(--bg3);border-left:3px solid var(--gold);}
+.conv-item.unread .conv-item-name{color:var(--white);font-weight:700;}
+.conv-av{width:34px;height:34px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;position:relative;}
+.conv-av .online-dot{position:absolute;bottom:1px;right:1px;width:9px;height:9px;border-radius:50%;background:var(--green);border:2px solid var(--bg1);}
+.conv-item-info{flex:1;min-width:0;}
+.conv-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
+.conv-item-name{font-size:13px;font-weight:600;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
+.conv-item-time{font-size:10px;color:var(--gray2);flex-shrink:0;}
+.conv-item-preview{font-size:11px;color:var(--gray2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-item-meta{display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;}
+.conv-tag{font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;text-transform:uppercase;letter-spacing:0.5px;}
+.conv-item-elapsed{font-size:10px;color:var(--gray2);}
+.conv-item-elapsed.late{color:var(--gold);}
+.conv-item-elapsed.very-late{color:var(--red);}
+.conv-unread-badge{background:var(--gold);color:#060B14;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;padding:0 4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.conv-item-close{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:transparent;border:none;color:var(--gray2);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;transition:all 0.15s;opacity:0;}
+.conv-item:hover .conv-item-close{opacity:1;}
+.conv-item-close:hover{background:var(--red-dim);color:var(--red);}
+.conv-empty{padding:32px 16px;text-align:center;font-size:13px;color:var(--gray2);}
+.conv-assigned-badge{font-size:9px;color:var(--blue);background:var(--blue-dim);border-radius:4px;padding:1px 5px;font-weight:600;}
+
+/* ── CENTER: CHAT ── */
+.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.chat-header{padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.chat-header-av{width:36px;height:36px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.chat-header-info{flex:1;}
+.chat-header-name{font-size:14px;font-weight:700;color:var(--white);}
+.chat-header-status{font-size:11px;color:var(--green);margin-top:1px;}
+.chat-header-actions{display:flex;gap:6px;}
+.hdr-btn{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--gray);cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.hdr-btn:hover{color:var(--white);border-color:rgba(255,255,255,0.15);}
+.hdr-btn.resolve{background:var(--green-dim);border-color:rgba(0,232,122,0.3);color:var(--green);}
+.hdr-btn.close-chat{background:var(--red-dim);border-color:rgba(255,71,87,0.3);color:var(--red);}
+
+.messages-area{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+.messages-area::-webkit-scrollbar{width:4px;}
+.messages-area::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px;}
+
+.msg-row{display:flex;gap:7px;align-items:flex-end;min-width:0;}
+.msg-row.from-agent{flex-direction:row-reverse;}
+.msg-av-sm{width:26px;height:26px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.msg-row.from-agent .msg-av-sm{background:linear-gradient(135deg,var(--gold),#C97D0E);}
+.msg-bubble-wrap{max-width:65%;min-width:0;display:flex;flex-direction:column;}
+.msg-bubble{
+  padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.55;
+  word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;
+  white-space:pre-wrap;min-width:0;width:100%;box-sizing:border-box;
+}
+.msg-row.from-client .msg-bubble{background:var(--bg3);color:var(--white);border-bottom-left-radius:4px;}
+.msg-row.from-agent .msg-bubble{background:linear-gradient(135deg,var(--gold),#C97D0E);color:#060B14;font-weight:600;border-bottom-right-radius:4px;}
+.msg-row.from-system .msg-bubble{background:var(--bg2);border:1px solid var(--border);color:var(--gray);font-style:italic;font-size:12px;border-radius:8px;}
+.msg-row.from-system{justify-content:center;}
+.msg-row.from-system .msg-bubble-wrap{max-width:80%;}
+
+/* Internal note bubble */
+.msg-row.from-note .msg-bubble{background:rgba(255,140,0,0.12);border:1px solid rgba(255,140,0,0.25);color:var(--orange);border-radius:10px;font-size:12px;width:100%;box-sizing:border-box;}
+.msg-row.from-note{flex-direction:row-reverse;}
+.msg-row.from-note .msg-av-sm{background:var(--orange-dim);}
+.note-label{font-size:9px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+
+/* Supervisor note in agent view */
+.msg-row.from-supervisor .msg-bubble{background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:var(--purple);border-radius:10px;font-size:12px;width:100%;box-sizing:border-box;}
+.msg-row.from-supervisor{flex-direction:row-reverse;}
+.msg-row.from-supervisor .msg-av-sm{background:var(--purple-dim);}
+.supervisor-note-label{font-size:9px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+
+.msg-time{font-size:10px;color:var(--gray2);margin-top:4px;}
+.msg-row.from-agent .msg-time,.msg-row.from-note .msg-time{text-align:right;}
+.msg-divider{text-align:center;font-size:11px;color:var(--gray2);display:flex;align-items:center;gap:10px;margin:4px 0;}
+.msg-divider::before,.msg-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── REPLY AREA ── */
+.reply-area{padding:12px 14px;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;}
+
+/* Reply/Note tabs */
+.reply-tabs{display:flex;gap:0;margin-bottom:10px;background:var(--bg3);border-radius:8px;padding:3px;}
+.reply-tab{flex:1;padding:5px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;border-radius:6px;transition:all 0.15s;color:var(--gray2);}
+.reply-tab.active.chat{background:var(--bg4);color:var(--gold);}
+.reply-tab.active.note{background:var(--orange-dim);color:var(--orange);}
+
+.quick-replies{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.qr-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:11px;font-weight:600;color:var(--gray);cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.qr-btn:hover{color:var(--white);border-color:rgba(255,255,255,0.15);}
+
+.input-row{display:flex;gap:8px;align-items:flex-end;position:relative;}
+.reply-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--white);font-family:'Inter',sans-serif;outline:none;resize:none;max-height:100px;line-height:1.5;transition:border-color 0.2s;}
+.reply-input:focus{border-color:var(--border-gold);}
+.reply-input.note-mode{border-color:rgba(255,140,0,0.3);}
+.reply-input.note-mode:focus{border-color:rgba(255,140,0,0.5);}
+.reply-input::placeholder{color:var(--gray2);}
+.send-btn{background:linear-gradient(135deg,var(--gold),#C97D0E);border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s;flex-shrink:0;}
+.send-btn:hover{box-shadow:0 4px 16px rgba(240,180,41,0.35);}
+.send-btn.note-mode{background:linear-gradient(135deg,var(--orange),#CC7000);}
+
+/* Canned responses popup */
+.canned-popup{position:absolute;bottom:calc(100% + 8px);left:0;right:50px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:10px;overflow:hidden;z-index:100;box-shadow:0 -8px 32px rgba(0,0,0,0.4);max-height:200px;overflow-y:auto;display:none;}
+.canned-popup.open{display:block;}
+.canned-header{padding:7px 12px;font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);}
+.canned-item{padding:8px 12px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid var(--border);}
+.canned-item:last-child{border-bottom:none;}
+.canned-item:hover{background:var(--bg4);}
+.canned-item-title{font-size:12px;font-weight:600;color:var(--white);}
+.canned-item-text{font-size:11px;color:var(--gray2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── NO SELECTION ── */
+.no-chat-selected{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--gray2);text-align:center;}
+.no-chat-icon{font-size:48px;opacity:0.4;}
+.no-chat-text{font-size:14px;}
+
+/* ── RIGHT: INFO PANEL ── */
+.info-panel{width:260px;flex-shrink:0;background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.info-panel.hidden{display:none;}
+.info-panel-header{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.info-panel-tabs{display:flex;gap:0;background:var(--bg3);border-radius:8px;padding:3px;}
+.info-tab{flex:1;padding:5px 6px;text-align:center;font-size:11px;font-weight:600;cursor:pointer;border-radius:6px;transition:all 0.15s;color:var(--gray2);}
+.info-tab.active{background:var(--bg4);color:var(--white);}
+.info-panel-body{flex:1;overflow-y:auto;padding:14px;}
+.info-panel-body::-webkit-scrollbar{width:3px;}
+.info-panel-body::-webkit-scrollbar-thumb{background:var(--bg4);}
+
+/* Info section */
+.info-section{margin-bottom:18px;}
+.info-section-title{font-size:10px;font-weight:700;color:var(--gray2);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.info-section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.info-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.info-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0;}
+.info-label{font-size:10px;color:var(--gray2);margin-bottom:1px;}
+.info-value{font-size:12px;color:var(--white);font-weight:500;word-break:break-all;}
+.info-value.unknown{color:var(--gray2);font-style:italic;}
+
+/* Tags manager */
+.tags-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.tag-chip{display:flex;align-items:center;gap:4px;border-radius:5px;padding:3px 7px;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.tag-chip .tag-x{font-size:9px;opacity:0.7;}
+.tag-chip .tag-x:hover{opacity:1;}
+.tag-add-btn{background:var(--bg3);border:1px dashed var(--border);border-radius:5px;padding:3px 8px;font-size:10px;color:var(--gray2);cursor:pointer;transition:all 0.15s;}
+.tag-add-btn:hover{border-color:var(--border-gold);color:var(--gold);}
+.tag-selector{background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;padding:8px;margin-top:6px;display:none;}
+.tag-selector.open{display:block;}
+.tag-option{display:flex;align-items:center;gap:7px;padding:5px 6px;cursor:pointer;border-radius:5px;font-size:11px;transition:background 0.15s;}
+.tag-option:hover{background:var(--bg4);}
+.tag-dot{width:9px;height:9px;border-radius:50%;}
+
+/* Assign agent */
+.assign-select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--white);font-family:'Inter',sans-serif;outline:none;cursor:pointer;}
+.assign-select option{background:var(--bg3);}
+
+/* Page history */
+.page-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+.page-item:last-child{border-bottom:none;}
+.page-item-url{font-size:11px;color:var(--blue);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;max-width:160px;}
+.page-item-time{font-size:10px;color:var(--gray2);margin-top:1px;}
+.page-bullet{width:6px;height:6px;border-radius:50%;background:var(--blue);margin-top:5px;flex-shrink:0;}
+
+/* Previous chats */
+.prev-chat{background:var(--bg3);border-radius:8px;padding:9px 10px;margin-bottom:8px;cursor:pointer;transition:background 0.15s;}
+.prev-chat:hover{background:var(--bg4);}
+.prev-chat-date{font-size:10px;color:var(--gray2);}
+.prev-chat-preview{font-size:12px;color:var(--white);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── STATS BAR ── */
+.stats-bar{background:var(--bg1);border-top:1px solid var(--border);padding:7px 18px;display:flex;gap:20px;flex-shrink:0;}
+.stat-item{font-size:11px;color:var(--gray);display:flex;align-items:center;gap:5px;}
+.stat-item strong{color:var(--white);font-size:13px;}
+.stat-item .dot{width:7px;height:7px;border-radius:50%;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg2);border:1px solid rgba(0,232,122,0.35);border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;color:var(--green);z-index:9999;pointer-events:none;opacity:0;transition:all 0.3s;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ══════════════════════════════
+   ADMIN PANEL STYLES
+══════════════════════════════ */
+#adminPanel{ display:none; }
+#adminPanel.open{ display:flex !important; }
+
+.adm-sidebar{
+  width:210px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:16px 0;
+}
+.adm-nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 18px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gray);
+  transition:all 0.15s;border-left:3px solid transparent;margin-bottom:2px;
+  position:relative;
+}
+.adm-nav-item:hover{background:var(--bg2);color:var(--white);}
+.adm-nav-item.active{background:var(--bg3);color:var(--gold);border-left-color:var(--gold);}
+.adm-nav-icon{font-size:16px;width:20px;text-align:center;}
+.adm-nav-badge{
+  margin-left:auto;background:var(--gold);color:#060B14;
+  font-size:10px;font-weight:800;border-radius:10px;padding:1px 6px;
+  display:none;
+}
+.adm-nav-badge.visible{display:inline-block;}
+.adm-sidebar-footer{margin-top:auto;padding:14px 18px;}
+
+.adm-content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.adm-section{padding:28px 32px;overflow-y:auto;flex:1;}
+.adm-section[style*="padding:0"]{padding:0!important;}
+.adm-content::-webkit-scrollbar{width:4px;}
+.adm-content::-webkit-scrollbar-thumb{background:var(--bg4);}
+
+.adm-section{}
+.adm-section-title{font-size:14px;font-weight:800;color:var(--white);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+
+/* KPI Grid */
+.adm-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:12px;}
+.adm-kpi{
+  background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+  padding:18px 16px;text-align:center;
+  border-top:2px solid var(--kc, var(--blue));
+}
+.adm-kpi-val{font-size:32px;font-weight:900;color:var(--kc, var(--blue));line-height:1;margin-bottom:6px;}
+.adm-kpi-label{font-size:11px;color:var(--gray);font-weight:500;}
+
+/* Agent status cards */
+.adm-agent-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px;
+}
+.adm-agent-av{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--bg4);display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;position:relative;
+}
+.adm-agent-status-dot{
+  position:absolute;bottom:1px;right:1px;
+  width:10px;height:10px;border-radius:50%;border:2px solid var(--bg2);
+}
+.adm-agent-info{flex:1;}
+.adm-agent-name{font-size:13px;font-weight:700;color:var(--white);}
+.adm-agent-meta{font-size:11px;color:var(--gray2);margin-top:2px;}
+.adm-agent-stats{display:flex;gap:14px;}
+.adm-agent-stat{text-align:center;}
+.adm-agent-stat-val{font-size:16px;font-weight:800;color:var(--white);}
+.adm-agent-stat-label{font-size:10px;color:var(--gray2);}
+
+/* Agent table */
+.adm-table{width:100%;border-collapse:collapse;font-size:13px;}
+.adm-table th{text-align:left;padding:10px 14px;font-size:10px;font-weight:700;color:var(--gray2);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);}
+.adm-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.adm-table tr:hover td{background:var(--bg2);}
+.adm-table tr:last-child td{border-bottom:none;}
+.adm-pass-field{
+  background:var(--bg3);border:1px solid var(--border);border-radius:6px;
+  padding:5px 10px;font-size:12px;font-family:'Inter',sans-serif;
+  color:var(--white);outline:none;width:150px;
+  transition:border-color 0.2s;
+}
+.adm-pass-field:focus{border-color:var(--border-gold);}
+.adm-role-badge{
+  font-size:10px;font-weight:700;border-radius:5px;padding:3px 8px;
+  text-transform:uppercase;letter-spacing:0.5px;
+}
+.adm-role-badge.agent{background:var(--blue-dim);color:var(--blue);}
+.adm-role-badge.admin{background:var(--purple-dim);color:var(--purple);}
+
+/* Buttons */
+.adm-btn{border:none;border-radius:7px;padding:6px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.adm-btn-gold{background:linear-gradient(135deg,var(--gold),#C97D0E);color:#060B14;}
+.adm-btn-gold:hover{box-shadow:0 3px 14px rgba(240,180,41,0.3);}
+.adm-btn-red{background:var(--red-dim);border:1px solid rgba(255,71,87,0.3);color:var(--red);}
+.adm-btn-red:hover{background:rgba(255,71,87,0.2);}
+.adm-btn-gray{background:var(--bg3);border:1px solid var(--border);color:var(--gray);}
+.adm-btn-gray:hover{color:var(--white);}
+.adm-btn-green{background:var(--green-dim);border:1px solid rgba(0,232,122,0.3);color:var(--green);}
+
+/* Monitor grid */
+.adm-monitor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.adm-chat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color 0.15s;}
+.adm-chat-card:hover{border-color:var(--border-gold);}
+.adm-chat-card-header{padding:12px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border);}
+.adm-chat-card-title{font-size:13px;font-weight:700;color:var(--white);flex:1;}
+.adm-chat-card-body{padding:12px 14px;max-height:160px;overflow-y:auto;}
+.adm-chat-card-body::-webkit-scrollbar{width:2px;}
+.adm-chat-card-body::-webkit-scrollbar-thumb{background:var(--bg4);}
+.adm-msg-mini{margin-bottom:8px;}
+.adm-msg-mini-author{font-size:10px;font-weight:700;color:var(--gray2);margin-bottom:2px;}
+.adm-msg-mini-text{font-size:12px;color:var(--white);background:var(--bg3);border-radius:8px;padding:6px 10px;display:inline-block;max-width:90%;word-break:break-word;}
+.adm-msg-mini.agent .adm-msg-mini-author{color:var(--gold);}
+.adm-msg-mini.agent .adm-msg-mini-text{background:rgba(240,180,41,0.12);color:var(--gold2);}
+.adm-chat-empty{color:var(--gray2);font-size:12px;font-style:italic;padding:8px 0;}
+.adm-chat-card-footer{padding:8px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.adm-monitor-empty{text-align:center;color:var(--gray2);padding:60px 0;font-size:14px;}
+
+/* Search */
+.adm-search-bar{margin-bottom:20px;}
+.adm-search-input{
+  width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 16px;font-size:14px;color:var(--white);
+  font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;margin-bottom:10px;
+}
+.adm-search-input:focus{border-color:var(--border-gold);}
+.adm-search-input::placeholder{color:var(--gray2);}
+.adm-search-filters{display:flex;gap:10px;flex-wrap:wrap;}
+.adm-filter-chip{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;transition:all 0.15s;}
+.adm-filter-chip:hover{color:var(--white);}
+.adm-filter-chip input{accent-color:var(--gold);cursor:pointer;}
+.adm-search-result{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s;}
+.adm-search-result:hover{border-color:var(--border-gold);}
+.adm-search-result-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.adm-search-result-title{font-size:14px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.adm-search-result-sub{font-size:12px;color:var(--gray2);}
+.adm-search-result-highlight{color:var(--gold);font-weight:600;}
+.adm-search-empty{text-align:center;color:var(--gray2);padding:40px 0;font-size:14px;}
+
+/* Agent modal fields */
+.adm-field-label{font-size:11px;font-weight:700;color:var(--gray2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;}
+.adm-field-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:9px 12px;font-size:13px;color:var(--white);
+  font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;
+}
+.adm-field-input:focus{border-color:var(--border-gold);}
+.adm-field-input::placeholder{color:var(--gray2);}
+select.adm-field-input option{background:var(--bg3);}
+
+/* ══ MONITOR SPLIT LAYOUT ══ */
+.monitor-split{display:flex;height:100%;overflow:hidden;}
+
+/* Left list */
+.monitor-list{
+  width:280px;flex-shrink:0;background:var(--bg1);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.monitor-list-header{
+  padding:14px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.monitor-cards{flex:1;overflow-y:auto;}
+.monitor-cards::-webkit-scrollbar{width:3px;}
+.monitor-cards::-webkit-scrollbar-thumb{background:var(--bg4);}
+
+.monitor-card{
+  padding:12px 14px;cursor:pointer;
+  border-bottom:1px solid var(--border);
+  transition:background 0.15s;
+  display:flex;align-items:flex-start;gap:9px;
+  position:relative;
+}
+.monitor-card:hover{background:var(--bg2);}
+.monitor-card.active{background:var(--bg3);border-left:3px solid var(--purple);}
+.monitor-card.has-unread .monitor-card-name{color:var(--white);font-weight:700;}
+.monitor-card-av{width:34px;height:34px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;position:relative;}
+.monitor-card-av .online-dot{position:absolute;bottom:1px;right:1px;width:9px;height:9px;border-radius:50%;background:var(--green);border:2px solid var(--bg1);}
+.monitor-card-info{flex:1;min-width:0;}
+.monitor-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
+.monitor-card-name{font-size:13px;font-weight:600;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
+.monitor-card-time{font-size:10px;color:var(--gray2);flex-shrink:0;}
+.monitor-card-preview{font-size:11px;color:var(--gray2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.monitor-card-meta{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;}
+.monitor-unread-badge{background:var(--red);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;padding:0 4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* Right viewer */
+.monitor-viewer{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+  background:var(--bg0);
+}
+.monitor-viewer-empty{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.monitor-viewer-header{
+  padding:12px 18px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.monitor-viewer-name{font-size:14px;font-weight:700;color:var(--white);}
+.monitor-viewer-sub{font-size:11px;color:var(--gray2);margin-top:2px;}
+.monitor-hdr-tag{font-size:10px;font-weight:700;border-radius:5px;padding:3px 8px;margin-left:4px;}
+
+.monitor-messages{
+  flex:1;overflow-y:auto;padding:16px 20px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.monitor-messages::-webkit-scrollbar{width:4px;}
+.monitor-messages::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px;}
+
+/* Supervisor note area */
+.monitor-note-area{
+  padding:12px 18px;background:var(--bg2);
+  border-top:2px solid rgba(168,85,247,0.3);
+  flex-shrink:0;
+}
+.monitor-note-label{
+  font-size:11px;font-weight:700;color:var(--purple);
+  margin-bottom:8px;display:flex;align-items:center;gap:6px;
+}
+.monitor-note-input{
+  flex:1;background:var(--bg3);
+  border:1px solid rgba(168,85,247,0.35);
+  border-radius:10px;padding:9px 12px;
+  font-size:13px;color:var(--white);font-family:'Inter',sans-serif;
+  outline:none;resize:none;max-height:100px;line-height:1.5;
+  transition:border-color 0.2s;
+}
+.monitor-note-input:focus{border-color:rgba(168,85,247,0.65);}
+.monitor-note-input::placeholder{color:var(--gray2);}
+.monitor-note-btn{
+  background:linear-gradient(135deg,var(--purple),#7C3AED);
+  border:none;border-radius:10px;padding:0 18px;height:40px;
+  cursor:pointer;font-size:13px;font-weight:700;color:#fff;
+  font-family:'Inter',sans-serif;transition:all 0.2s;flex-shrink:0;
+  white-space:nowrap;
+}
+.monitor-note-btn:hover{box-shadow:0 4px 16px rgba(168,85,247,0.4);}
+
+/* Supervisor note bubble in messages */
+.msg-row.from-supervisor .msg-bubble-wrap{max-width:70%;}
+.msg-row.from-supervisor .msg-bubble{
+  background:rgba(168,85,247,0.12);
+  border:1px solid rgba(168,85,247,0.3);
+  color:var(--purple);border-radius:10px;font-size:12px;
+}
+.msg-row.from-supervisor{flex-direction:row-reverse;}
+.msg-row.from-supervisor .msg-av-sm{background:var(--purple-dim);}
+.supervisor-note-label{
+  font-size:9px;font-weight:700;color:var(--purple);
+  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;
+}
+.monitor-msg-divider{text-align:center;font-size:11px;color:var(--gray2);display:flex;align-items:center;gap:10px;margin:4px 0;}
+.monitor-msg-divider::before,.monitor-msg-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── CONFIRM MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(6,11,20,0.8);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:9998;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:var(--bg2);border:1px solid var(--border-gold);border-radius:14px;padding:28px 28px 22px;width:320px;text-align:center;}
+.modal-icon{font-size:36px;margin-bottom:10px;}
+.modal-title{font-size:16px;font-weight:800;color:var(--white);margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--gray);margin-bottom:22px;line-height:1.5;}
+.modal-actions{display:flex;gap:10px;}
+.modal-btn{flex:1;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid var(--border);background:var(--bg3);color:var(--gray);transition:all 0.15s;}
+.modal-btn:hover{color:var(--white);}
+.modal-btn.confirm-red{background:var(--red-dim);border-color:rgba(255,71,87,0.35);color:var(--red);}
+.modal-btn.confirm-red:hover{background:rgba(255,71,87,0.25);}
+.modal-btn.confirm-green{background:var(--green-dim);border-color:rgba(0,232,122,0.35);color:var(--green);}
+.modal-btn.confirm-green:hover{background:rgba(0,232,122,0.2);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">C</div>
+    <div class="login-title">CORDIA<span>LITO</span></div>
+    <div class="login-sub">Panel de Agentes de Soporte</div>
+    <input class="login-input" type="text" id="loginUser" placeholder="Usuario (ej: agente01)" />
+    <input class="login-input" type="password" id="loginPass" placeholder="Contraseña" />
+    <button class="login-btn" onclick="doLogin()">Entrar al Panel</button>
+    <div class="login-err" id="loginErr">Usuario o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="mark">C</div>
+    <div class="txt">CORDIA<span>LITO</span></div>
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-right">
+    <!-- Connection status dot -->
+    <div id="connDot" title="Conectado" style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 6px rgba(0,232,122,0.5);transition:background 0.3s;"></div>
+    <!-- Sound toggle -->
+    <div class="sound-btn" id="soundBtn" onclick="toggleSound()" title="Notificaciones de sonido">🔔</div>
+    <!-- Agent status -->
+    <div class="status-selector">
+      <button class="status-btn" onclick="toggleStatusDropdown()" id="statusBtn">
+        <div class="status-dot online" id="statusDot"></div>
+        <span id="statusLabel">En línea</span> ▾
+      </button>
+      <div class="status-dropdown" id="statusDropdown">
+        <div class="status-option" onclick="setStatus('online')"><div class="status-dot online"></div> En línea</div>
+        <div class="status-option" onclick="setStatus('away')"><div class="status-dot away"></div> Ausente</div>
+        <div class="status-option" onclick="setStatus('busy')"><div class="status-dot busy"></div> Ocupado</div>
+      </div>
+    </div>
+    <div class="agent-name-tag">Agente: <span id="agentDisplayName">—</span></div>
+    <button class="logout-btn" onclick="doLogout()">Salir</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-panel">
+
+  <!-- LEFT: conv list -->
+  <div class="conv-list">
+    <div class="conv-list-header">
+      <div class="conv-list-title">💬 Chats (<span id="chatCount">0</span>)</div>
+      <div class="filter-tabs">
+        <div class="filter-tab active" id="tab-all" onclick="setFilter('all')">Todos <span class="tab-count" id="count-all">0</span></div>
+        <div class="filter-tab" id="tab-mine" onclick="setFilter('mine')">Míos <span class="tab-count" id="count-mine">0</span></div>
+        <div class="filter-tab" id="tab-unassigned" onclick="setFilter('unassigned')">Sin asignar <span class="tab-count" id="count-unassigned">0</span></div>
+      </div>
+    </div>
+    <div class="conv-search-wrap">
+      <input class="conv-search" type="text" placeholder="🔍 Buscar conversación…" id="convSearch" oninput="filterConvs()" />
+    </div>
+    <div class="conv-items" id="convItems">
+      <div class="conv-empty">Esperando chats entrantes…</div>
+    </div>
+  </div>
+
+  <!-- CENTER: chat -->
+  <div class="chat-area" id="chatArea">
+    <div class="no-chat-selected" id="noChatMsg">
+      <div class="no-chat-icon">💬</div>
+      <div class="no-chat-text">Selecciona un chat para responder</div>
+      <div style="font-size:12px;margin-top:4px;color:var(--gray2)">Los mensajes aparecen en tiempo real</div>
+    </div>
+
+    <div id="chatView" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+      <div class="chat-header" id="chatHeader">
+        <div class="chat-header-av" id="chatHeaderAv">👤</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name" id="chatHeaderName">—</div>
+          <div class="chat-header-status" id="chatHeaderStatus">🟢 En línea · Chat activo</div>
+        </div>
+        <div class="chat-header-actions">
+          <button class="hdr-btn resolve" onclick="resolveChat()">✅ Resolver</button>
+          <button class="hdr-btn" onclick="transferChat()">🔀 Transferir</button>
+          <button class="hdr-btn close-chat" onclick="confirmClose('header')">✕ Cerrar</button>
+        </div>
+      </div>
+      <div class="messages-area" id="messagesArea"></div>
+      <div class="reply-area">
+        <!-- Reply / Note tabs -->
+        <div class="reply-tabs">
+          <div class="reply-tab active chat" id="replyTabChat" onclick="setReplyMode('chat')">💬 Respuesta</div>
+          <div class="reply-tab note" id="replyTabNote" onclick="setReplyMode('note')">📝 Nota interna</div>
+        </div>
+        <!-- Quick replies (only in chat mode) -->
+        <div class="quick-replies" id="quickRepliesBar">
+          <button class="qr-btn" onclick="insertQuick('Hola 👋 ¿En qué te puedo ayudar?')">Saludo</button>
+          <button class="qr-btn" onclick="insertQuick('Por favor espera un momento mientras reviso tu caso. 🔍')">Esperar</button>
+          <button class="qr-btn" onclick="insertQuick('Ya verifiqué tu cuenta. ¿Podrías darme más detalles?')">Verificado</button>
+          <button class="qr-btn" onclick="insertQuick('Tu solicitud fue procesada exitosamente ✅')">Resuelto</button>
+          <button class="qr-btn" onclick="insertQuick('Lamentamos el inconveniente. Lo estamos solucionando ahora mismo.')">Disculpa</button>
+        </div>
+        <div class="input-row" style="position:relative;">
+          <!-- Canned responses popup -->
+          <div class="canned-popup" id="cannedPopup">
+            <div class="canned-header">📋 Respuestas rápidas — escribe el nombre</div>
+            <div id="cannedList"></div>
+          </div>
+          <textarea class="reply-input" id="replyInput" placeholder="Escribe tu respuesta… (/ para respuestas guardadas)" rows="1"
+            onkeydown="handleInputKey(event)"
+            oninput="handleInputChange(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendReply()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: info panel -->
+  <div class="info-panel" id="infoPanel">
+    <div class="info-panel-header">
+      <div class="info-panel-tabs">
+        <div class="info-tab active" id="itab-visitor" onclick="setInfoTab('visitor')">Visitante</div>
+        <div class="info-tab" id="itab-history" onclick="setInfoTab('history')">Historial</div>
+        <div class="info-tab" id="itab-notes" onclick="setInfoTab('notes')">Notas</div>
+      </div>
+    </div>
+    <div class="info-panel-body" id="infoPanelBody">
+      <div style="text-align:center;color:var(--gray2);font-size:13px;padding-top:40px;">Selecciona un chat</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item"><div class="dot" style="background:var(--green)"></div>Activos: <strong id="statActive">0</strong></div>
+  <div class="stat-item"><div class="dot" style="background:var(--gold)"></div>Sin responder: <strong id="statUnread">0</strong></div>
+  <div class="stat-item"><div class="dot" style="background:var(--blue)"></div>Resueltos hoy: <strong id="statResolved">0</strong></div>
+  <div class="stat-item"><div class="dot" style="background:var(--purple)"></div>Notas: <strong id="statNotes">0</strong></div>
+  <div class="stat-item" style="margin-left:auto;">
+    <span id="clockDisplay" style="color:var(--gray2);font-size:12px;"></span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     ADMIN PANEL (supervisor only)
+══════════════════════════════════════════════════════ -->
+<div id="adminPanel" style="display:none;position:fixed;inset:0;background:var(--bg0);flex-direction:column;z-index:5000;">
+
+  <!-- Admin Topbar -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="mark">C</div>
+      <div class="txt">CORDIA<span>LITO</span></div>
+    </div>
+    <div class="topbar-sep"></div>
+    <div style="background:var(--purple-dim);border:1px solid rgba(168,85,247,0.3);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;color:var(--purple);">🛡️ PANEL ADMINISTRADOR</div>
+    <div class="topbar-right">
+      <div class="agent-name-tag">Supervisor: <span id="adminDisplayName">—</span></div>
+      <button class="logout-btn" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- Admin Body -->
+  <div style="display:flex;flex:1;overflow:hidden;">
+
+    <!-- Sidebar -->
+    <div class="adm-sidebar">
+      <nav>
+        <div class="adm-nav-item active" id="anav-dashboard" onclick="adminSection('dashboard')">
+          <span class="adm-nav-icon">📊</span> Dashboard
+        </div>
+        <div class="adm-nav-item" id="anav-agents" onclick="adminSection('agents')">
+          <span class="adm-nav-icon">👥</span> Agentes
+        </div>
+        <div class="adm-nav-item" id="anav-monitor" onclick="adminSection('monitor')">
+          <span class="adm-nav-icon">🖥️</span> Monitor de Chats
+          <span class="adm-nav-badge" id="monitorBadge">0</span>
+        </div>
+        <div class="adm-nav-item" id="anav-search" onclick="adminSection('search')">
+          <span class="adm-nav-icon">🔍</span> Buscador
+        </div>
+      </nav>
+      <div class="adm-sidebar-footer">
+        <div style="font-size:10px;color:var(--gray2);text-align:center;" id="adminClock">—</div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="adm-content" id="admContent">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="asec-dashboard" class="adm-section">
+        <div class="adm-section-title">📊 Dashboard en vivo</div>
+        <div class="adm-kpi-grid" id="admKpiGrid">
+          <div class="adm-kpi"><div class="adm-kpi-val" id="kpi-active">0</div><div class="adm-kpi-label">Chats activos</div></div>
+          <div class="adm-kpi"><div class="adm-kpi-val" id="kpi-agents">0</div><div class="adm-kpi-label">Agentes conectados</div></div>
+          <div class="adm-kpi" style="--kc:var(--gold)"><div class="adm-kpi-val" id="kpi-unread">0</div><div class="adm-kpi-label">Sin responder</div></div>
+          <div class="adm-kpi" style="--kc:var(--green)"><div class="adm-kpi-val" id="kpi-resolved">0</div><div class="adm-kpi-label">Resueltos hoy</div></div>
+        </div>
+        <div class="adm-section-title" style="margin-top:28px;">👥 Estado de agentes</div>
+        <div id="admAgentStatus"></div>
+      </div>
+
+      <!-- ── AGENTS ── -->
+      <div id="asec-agents" class="adm-section" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div class="adm-section-title" style="margin-bottom:0;">👥 Gestión de Agentes</div>
+          <button class="adm-btn adm-btn-gold" onclick="openAgentModal()">+ Nuevo agente</button>
+        </div>
+        <div id="admAgentTable"></div>
+      </div>
+
+      <!-- ── MONITOR ── -->
+      <div id="asec-monitor" class="adm-section" style="display:none;padding:0;height:100%;overflow:hidden;">
+        <div class="monitor-split">
+
+          <!-- Left: chat cards list -->
+          <div class="monitor-list" id="monitorList">
+            <div class="monitor-list-header">
+              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);">🖥️ Chats en Vivo (<span id="monitorCount">0</span>)</div>
+              <input type="text" class="conv-search" id="monitorSearch" placeholder="🔍 Filtrar…" oninput="renderMonitorList()" style="margin-top:10px;width:100%;" />
+            </div>
+            <div class="monitor-cards" id="monitorCards">
+              <div class="adm-monitor-empty">No hay chats activos</div>
+            </div>
+          </div>
+
+          <!-- Right: full chat viewer -->
+          <div class="monitor-viewer" id="monitorViewer">
+            <div class="monitor-viewer-empty" id="monitorViewerEmpty">
+              <div style="font-size:40px;opacity:0.3;margin-bottom:12px;">🖥️</div>
+              <div style="font-size:14px;color:var(--gray2);">Selecciona un chat para supervisarlo</div>
+            </div>
+            <div id="monitorChatPane" style="display:none;flex-direction:column;height:100%;">
+              <!-- Viewer header -->
+              <div class="monitor-viewer-header" id="monitorViewerHeader"></div>
+              <!-- Messages -->
+              <div class="monitor-messages" id="monitorMessages"></div>
+              <!-- Supervisor note input -->
+              <div class="monitor-note-area">
+                <div class="monitor-note-label">🛡️ Nota de Supervisor <span style="font-size:10px;font-weight:400;color:var(--gray2);">(visible para el agente asignado y supervisores)</span></div>
+                <div style="display:flex;gap:8px;align-items:flex-end;">
+                  <textarea class="monitor-note-input" id="monitorNoteInput"
+                    placeholder="Escribe una nota interna para el operador…"
+                    rows="1"
+                    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupervisorNote();}"
+                    oninput="autoResize(this)"></textarea>
+                  <button class="monitor-note-btn" onclick="sendSupervisorNote()">Enviar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SEARCH ── -->
+      <div id="asec-search" class="adm-section" style="display:none;">
+        <div class="adm-section-title">🔍 Buscador Global</div>
+        <div class="adm-search-bar">
+          <input type="text" class="adm-search-input" id="admSearchInput" placeholder="Buscar por agente, cliente, sesión o contenido del mensaje…" oninput="runAdminSearch()" />
+          <div class="adm-search-filters">
+            <label class="adm-filter-chip">
+              <input type="checkbox" id="sf-agent" checked onchange="runAdminSearch()"> Agentes
+            </label>
+            <label class="adm-filter-chip">
+              <input type="checkbox" id="sf-client" checked onchange="runAdminSearch()"> Clientes
+            </label>
+            <label class="adm-filter-chip">
+              <input type="checkbox" id="sf-content" checked onchange="runAdminSearch()"> Contenido
+            </label>
+          </div>
+        </div>
+        <div id="admSearchResults"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- AGENT CREATE/EDIT MODAL -->
+<div class="modal-overlay" id="agentModal">
+  <div class="modal-box" style="width:380px;text-align:left;">
+    <div style="font-size:20px;margin-bottom:6px;" id="agentModalIcon">👤</div>
+    <div class="modal-title" id="agentModalTitle" style="text-align:left;">Nuevo agente</div>
+    <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <div class="adm-field-label">Nombre completo</div>
+        <input class="adm-field-input" type="text" id="amName" placeholder="Ej: Agente 03" />
+      </div>
+      <div>
+        <div class="adm-field-label">Usuario (login)</div>
+        <input class="adm-field-input" type="text" id="amUser" placeholder="Ej: agente03" />
+      </div>
+      <div>
+        <div class="adm-field-label">Contraseña</div>
+        <div style="position:relative;">
+          <input class="adm-field-input" type="password" id="amPass" placeholder="Contraseña segura" style="padding-right:40px;" />
+          <span onclick="togglePassVis('amPass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:var(--gray2);">👁</span>
+        </div>
+      </div>
+      <div>
+        <div class="adm-field-label">Rol</div>
+        <select class="adm-field-input" id="amRole">
+          <option value="agent">Agente</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--red);margin-top:8px;display:none;" id="agentModalErr">Completa todos los campos</div>
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="modal-btn" onclick="closeAgentModal()">Cancelar</button>
+      <button class="modal-btn confirm-green" id="agentModalSaveBtn" onclick="saveAgent()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-icon" id="modalIcon">✕</div>
+    <div class="modal-title" id="modalTitle">¿Cerrar esta conversación?</div>
+    <div class="modal-sub" id="modalSub">La conversación desaparecerá de tu lista.</div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal()">Cancelar</button>
+      <button class="modal-btn confirm-red" id="modalConfirmBtn" onclick="executeModalAction()">Cerrar chat</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIG
+============================================================ */
+const SUPA_URL = 'https://ewjqksuuerwjiiqewpbp.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3anFrc3V1ZXJ3amlpcWV3cGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2Mjg0NTcsImV4cCI6MjA4NzIwNDQ1N30.8gA4ljwI6hBwj-e5fax0huADbr6unPjYMK09duMYhRs';
+
+// Agentes en memoria — el supervisor puede crear/editar/eliminar
+let AGENTS_DB = {
+  'agente01':{ pass:'cordialito2025', name:'Agente 01', role:'agent', status:'offline', chatsHoy:0, resueltosHoy:0, createdAt:'2025-01-10' },
+  'agente02':{ pass:'cordialito2025', name:'Agente 02', role:'agent', status:'offline', chatsHoy:0, resueltosHoy:0, createdAt:'2025-01-10' },
+  'supervisor':{ pass:'super2025', name:'Supervisor', role:'admin', status:'offline', chatsHoy:0, resueltosHoy:0, createdAt:'2025-01-01' },
+};
+const AGENTS = AGENTS_DB;
+
+// Canned responses (respuestas predefinidas)
+const CANNED = [
+  { key:'saludo',   title:'Saludo inicial',   text:'Hola 👋 ¡Bienvenido a Cordialito! ¿En qué te puedo ayudar hoy?' },
+  { key:'esperar',  title:'Pedir espera',      text:'Por favor dame un momento mientras reviso tu caso. 🔍' },
+  { key:'verificar',title:'Cuenta verificada', text:'Ya verifiqué tu cuenta. ¿Podrías darme más detalles sobre el problema?' },
+  { key:'resuelto', title:'Caso resuelto',     text:'Tu solicitud fue procesada exitosamente ✅ ¿Hay algo más en que pueda ayudarte?' },
+  { key:'disculpa', title:'Pedir disculpa',    text:'Lamentamos el inconveniente. Estamos trabajando para solucionarlo lo antes posible.' },
+  { key:'horario',  title:'Horario de atención',text:'Nuestro horario de atención es de lunes a viernes de 8am a 6pm.' },
+  { key:'cierre',   title:'Despedida',         text:'Ha sido un placer ayudarte. ¡Que tengas un excelente día! 😊' },
+];
+
+const TAG_DEFS = [
+  { id:'urgente',  label:'Urgente',  color:'#FF4757', bg:'rgba(255,71,87,0.15)'  },
+  { id:'vip',      label:'VIP',      color:'#F0B429', bg:'rgba(240,180,41,0.15)' },
+  { id:'ventas',   label:'Ventas',   color:'#00E87A', bg:'rgba(0,232,122,0.15)'  },
+  { id:'soporte',  label:'Soporte',  color:'#3B82F6', bg:'rgba(59,130,246,0.15)' },
+  { id:'reclamo',  label:'Reclamo',  color:'#A855F7', bg:'rgba(168,85,247,0.15)' },
+];
+
+/* ============================================================
+   STATE
+============================================================ */
+let currentAgent = null;
+let sessions = {};
+let activeSession = null;
+let resolvedToday = 0;
+let totalNotes = 0;
+let pendingModalAction = null;
+let agentStatus = 'online';
+let soundEnabled = true;
+let replyMode = 'chat'; // 'chat' | 'note'
+let currentFilter = 'all';
+let currentInfoTab = 'visitor';
+let audioCtx = null;
+
+/* ============================================================
+   LOGIN
+============================================================ */
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim().toLowerCase();
+  const p = document.getElementById('loginPass').value;
+  const agent = AGENTS_DB[u];
+  if (agent && agent.pass === p) {
+    currentAgent = { id: u, name: agent.name, role: agent.role };
+    AGENTS_DB[u].status = 'online';
+    document.getElementById('loginScreen').style.display = 'none';
+    if (agent.role === 'admin') {
+      openAdminPanel();
+    } else {
+      document.getElementById('agentDisplayName').textContent = currentAgent.name;
+      initPanel();
+    }
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  if (currentAgent) AGENTS_DB[currentAgent.id].status = 'offline';
+  currentAgent = null;
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+/* ============================================================
+   STATUS
+============================================================ */
+function toggleStatusDropdown() {
+  document.getElementById('statusDropdown').classList.toggle('open');
+}
+function setStatus(s) {
+  agentStatus = s;
+  const labels = { online:'En línea', away:'Ausente', busy:'Ocupado' };
+  document.getElementById('statusLabel').textContent = labels[s];
+  document.getElementById('statusDot').className = `status-dot ${s}`;
+  document.getElementById('statusDropdown').classList.remove('open');
+  showToast(s === 'online' ? '🟢 Estado: En línea' : s === 'away' ? '🟡 Estado: Ausente' : '🔴 Estado: Ocupado');
+}
+document.addEventListener('click', e => {
+  const sel = document.querySelector('.status-selector');
+  if (sel && !sel.contains(e.target)) document.getElementById('statusDropdown').classList.remove('open');
+});
+
+/* ============================================================
+   SOUND
+============================================================ */
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const btn = document.getElementById('soundBtn');
+  btn.textContent = soundEnabled ? '🔔' : '🔕';
+  btn.classList.toggle('muted', !soundEnabled);
+  showToast(soundEnabled ? '🔔 Sonido activado' : '🔕 Sonido silenciado');
+}
+function playNotifSound() {
+  if (!soundEnabled) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(660, audioCtx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+/* ============================================================
+   FILTER TABS
+============================================================ */
+function setFilter(f) {
+  currentFilter = f;
+  ['all','mine','unassigned'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === f);
+  });
+  renderConvList();
+}
+function getFilteredSessions() {
+  return Object.keys(sessions).filter(sid => {
+    const s = sessions[sid];
+    if (currentFilter === 'mine') return s.assignedTo === currentAgent?.id;
+    if (currentFilter === 'unassigned') return !s.assignedTo;
+    return true;
+  });
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+async function initPanel() {
+  await loadExistingMessages();
+  loadPersistedAssignments(); // restore assignments from localStorage
+  subscribeRealtime();
+  setInterval(updateClock, 1000);
+  updateClock();
+}
+
+/* ============================================================
+   LOAD MESSAGES
+============================================================ */
+let _lastLoadedTimestamp = null; // shared with subscribeRealtime to avoid gaps
+
+async function loadExistingMessages() {
+  try {
+    // Load last 1000 messages sorted ascending so processMessage sees them in order
+    const res = await fetch(`${SUPA_URL}/rest/v1/mensajes?order=creado_at.asc&limit=1000`, {
+      headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const msgs = await res.json();
+    if (Array.isArray(msgs)) {
+      msgs.forEach(m => processMessage(m, false));
+      // Save timestamp of last message so polling starts exactly from here
+      if (msgs.length > 0) _lastLoadedTimestamp = msgs[msgs.length - 1].creado_at;
+    }
+    renderConvList();
+    updateStats();
+  } catch(e) { console.error('Error loading messages:', e); }
+}
+
+/* ============================================================
+   REALTIME POLLING
+============================================================ */
+function subscribeRealtime() {
+  // Use the last loaded message timestamp as starting point to avoid gaps
+  let lastCheck = _lastLoadedTimestamp || new Date().toISOString();
+  let pollActive = false;
+
+  async function doPoll(forceRefresh = false) {
+    if (pollActive) return; // avoid overlapping requests
+    pollActive = true;
+    try {
+      // If forced refresh (visibility/online event), re-load all recent messages
+      const url = forceRefresh
+        ? `${SUPA_URL}/rest/v1/mensajes?order=creado_at.asc&limit=500`
+        : `${SUPA_URL}/rest/v1/mensajes?creado_at=gt.${encodeURIComponent(lastCheck)}&order=creado_at.asc&limit=500`;
+      const res = await fetch(url, {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const msgs = await res.json();
+      if (Array.isArray(msgs) && msgs.length > 0) {
+        // Update lastCheck to the timestamp of the LAST received message (not current time)
+        const lastMsg = msgs[msgs.length - 1];
+        if (lastMsg?.creado_at) lastCheck = lastMsg.creado_at;
+        let changed = false;
+        msgs.forEach(m => {
+          const antes = sessions[m.sesion_id]?.msgs?.length || 0;
+          processMessage(m, !forceRefresh);
+          if ((sessions[m.sesion_id]?.msgs?.length || 0) > antes) changed = true;
+        });
+        if (changed) { renderConvList(); updateStats(); }
+      }
+      setConnStatus(true);
+    } catch(e) {
+      console.warn('[Poll]', e);
+      setConnStatus(false);
+    } finally {
+      pollActive = false;
+    }
+  }
+
+  // Normal polling every 2 seconds
+  setInterval(() => doPoll(false), 2000);
+
+  // Immediate full refresh when tab becomes visible again (critical for mobile)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      console.log('[Poll] Tab visible — forcing refresh');
+      doPoll(true);
+    }
+  });
+
+  // Refresh on network reconnect (mobile switches between wifi/data)
+  window.addEventListener('online', () => {
+    console.log('[Poll] Network online — forcing refresh');
+    showToast('🌐 Conexión restaurada — actualizando…');
+    doPoll(true);
+  });
+  window.addEventListener('offline', () => {
+    setConnStatus(false);
+    showToast('⚠️ Sin conexión a Internet', true);
+  });
+}
+
+// Connection status indicator
+function setConnStatus(ok) {
+  const dot = document.getElementById('connDot');
+  if (!dot) return;
+  dot.title = ok ? 'Conectado' : 'Sin conexión';
+  dot.style.background = ok ? 'var(--green)' : 'var(--red)';
+}
+
+/* ============================================================
+   PROCESS MESSAGE
+============================================================ */
+function processMessage(m, isNew) {
+  const sid = m.sesion_id;
+  if (!sessions[sid]) {
+    sessions[sid] = {
+      id: sid, msgs: [], notes: [], unread: 0,
+      clientName: `Cliente ${sid.substring(0,8)}`,
+      lastTime: m.creado_at,
+      assignedTo: null,
+      tags: [],
+      visitorInfo: {
+        location: 'Venezuela 🇻🇪',
+        browser: 'Chrome 124',
+        os: 'Windows 11',
+        ip: `192.168.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`,
+        pages: [`/inicio`, `/productos`, `/soporte`],
+        startTime: new Date().toISOString(),
+      }
+    };
+  }
+
+  // ── Supervisor note (SUPNOTE: prefix in autor) ──
+  const isSupNote = m.autor && m.autor.startsWith('SUPNOTE:');
+  if (isSupNote) {
+    const alreadyInNotes = sessions[sid].notes.find(n => n.id === m.id);
+    if (alreadyInNotes) return;
+    // Build note object compatible with existing note system
+    const note = {
+      id: m.id,
+      sesion_id: sid,
+      autor: m.autor.replace('SUPNOTE:', ''),
+      texto: m.texto,
+      creado_at: m.creado_at,
+      tipo: 'supervisor_note'
+    };
+    sessions[sid].notes.push(note);
+    sessions[sid].lastTime = m.creado_at;
+    if (isNew) {
+      // Show in agent panel if this session is open
+      if (activeSession === sid) {
+        appendNoteToView(note);
+      }
+      // Show in monitor viewer if this session is open in admin panel
+      if (typeof monitorActiveSid !== 'undefined' && monitorActiveSid === sid) {
+        const area = document.getElementById('monitorMessages');
+        if (area) {
+          appendMonitorNote(note, area);
+          area.scrollTop = area.scrollHeight;
+          // refresh header count
+          const hdr = document.getElementById('monitorViewerHeader');
+          if (hdr) {
+            const countEl = hdr.querySelector('.sup-note-count');
+            if (countEl) countEl.textContent = sessions[sid].notes.filter(n=>n.tipo==='supervisor_note').length;
+          }
+        }
+        renderMonitorList();
+      }
+      // Toast only for agents (not the supervisor who sent it)
+      if (currentAgent && currentAgent.role !== 'admin') {
+        showToast('🛡️ Nota de supervisor recibida');
+        playNotifSound();
+      }
+    }
+    return;
+  }
+
+  // ── Normal message ──
+  const exists = sessions[sid].msgs.find(x => x.id === m.id);
+  if (exists) return;
+
+  sessions[sid].msgs.push(m);
+  sessions[sid].lastTime = m.creado_at;
+
+  if (isNew && m.autor === 'cliente') {
+    if (activeSession !== sid) sessions[sid].unread = (sessions[sid].unread || 0) + 1;
+    if (activeSession === sid) appendMessageToView(m);
+    showToast(`💬 Nuevo mensaje de ${sessions[sid].clientName}`);
+    playNotifSound();
+  } else if (isNew && m.autor !== 'cliente' && activeSession === sid) {
+    // agent message already shown by sendReply
+  }
+}
+
+/* ============================================================
+   RENDER CONV LIST
+============================================================ */
+function renderConvList() {
+  const filter = document.getElementById('convSearch').value.toLowerCase();
+  const container = document.getElementById('convItems');
+
+  const allKeys = Object.keys(sessions);
+  const mineKeys = allKeys.filter(k => sessions[k].assignedTo === currentAgent?.id);
+  const unassignedKeys = allKeys.filter(k => !sessions[k].assignedTo);
+
+  document.getElementById('count-all').textContent = allKeys.length;
+  document.getElementById('count-mine').textContent = mineKeys.length;
+  document.getElementById('count-unassigned').textContent = unassignedKeys.length;
+  document.getElementById('chatCount').textContent = allKeys.length;
+
+  let keys = getFilteredSessions().filter(sid => {
+    if (!filter) return true;
+    return sessions[sid].clientName.toLowerCase().includes(filter) || sid.includes(filter);
+  });
+
+  if (keys.length === 0) {
+    container.innerHTML = '<div class="conv-empty">No hay conversaciones aquí</div>';
+    return;
+  }
+
+  keys.sort((a,b) => new Date(sessions[b].lastTime) - new Date(sessions[a].lastTime));
+
+  container.innerHTML = keys.map(sid => {
+    const s = sessions[sid];
+    // Skip SUPNOTE messages for preview (they are internal notes)
+    const visibleMsgs = s.msgs.filter(m => !m.autor || !m.autor.startsWith('SUPNOTE:'));
+    const last = visibleMsgs[visibleMsgs.length-1];
+    const preview = last ? last.texto.substring(0,38) : '—';
+    const time = last ? formatTime(last.creado_at) : '';
+    const unread = s.unread > 0;
+    const isActive = activeSession === sid;
+    const elapsed = getElapsed(s.lastTime);
+    const elapsedClass = elapsed.mins > 15 ? 'very-late' : elapsed.mins > 5 ? 'late' : '';
+    const tagsHtml = s.tags.map(tid => {
+      const td = TAG_DEFS.find(t=>t.id===tid);
+      return td ? `<span class="conv-tag" style="background:${td.bg};color:${td.color}">${td.label}</span>` : '';
+    }).join('');
+    const assignedHtml = s.assignedTo ? `<span class="conv-assigned-badge">${AGENTS[s.assignedTo]?.name||s.assignedTo}</span>` : '';
+    return `
+      <div class="conv-item ${isActive?'active':''} ${unread?'unread':''}" onclick="selectSession('${sid}')">
+        <div class="conv-av">👤<div class="online-dot"></div></div>
+        <div class="conv-item-info">
+          <div class="conv-item-top">
+            <div class="conv-item-name">${s.clientName}</div>
+            <div class="conv-item-time">${time}</div>
+          </div>
+          <div class="conv-item-preview">${preview}${preview.length===38?'…':''}</div>
+          <div class="conv-item-meta">
+            ${tagsHtml}${assignedHtml}
+            <span class="conv-item-elapsed ${elapsedClass}">⏱ ${elapsed.label}</span>
+          </div>
+        </div>
+        ${unread ? `<div class="conv-unread-badge">${s.unread}</div>` : ''}
+        <button class="conv-item-close" onclick="event.stopPropagation();confirmClose('list','${sid}')" title="Cerrar">✕</button>
+      </div>`;
+  }).join('');
+}
+
+function filterConvs() { renderConvList(); }
+
+/* ============================================================
+   SELECT SESSION
+============================================================ */
+function selectSession(sid) {
+  activeSession = sid;
+  sessions[sid].unread = 0;
+
+  document.getElementById('noChatMsg').style.display = 'none';
+  const cv = document.getElementById('chatView');
+  cv.style.display = 'flex';
+  cv.style.flexDirection = 'column';
+  cv.style.overflow = 'hidden';
+  cv.style.flex = '1';
+
+  document.getElementById('chatHeaderName').textContent = sessions[sid].clientName;
+  document.getElementById('chatHeaderAv').textContent = '👤';
+
+  const area = document.getElementById('messagesArea');
+  area.innerHTML = '';
+  // Merge messages + notes sorted by time so supervisor notes appear inline
+  const allItems = [
+    ...sessions[sid].msgs.map(m => ({ ...m, _itemType: 'msg' })),
+    ...sessions[sid].notes.map(n => ({ ...n, _itemType: 'note' }))
+  ].sort((a, b) => new Date(a.creado_at) - new Date(b.creado_at));
+
+  let lastDate = '';
+  allItems.forEach(item => {
+    const d = new Date(item.creado_at).toLocaleDateString('es-VE',{day:'numeric',month:'long'});
+    if (d !== lastDate) {
+      lastDate = d;
+      const div = document.createElement('div');
+      div.className = 'msg-divider'; div.textContent = d;
+      area.appendChild(div);
+    }
+    if (item._itemType === 'msg') {
+      appendMessageToView(item, false);
+    } else {
+      appendNoteToView(item, false);
+    }
+  });
+
+  area.scrollTop = area.scrollHeight;
+  renderConvList();
+  updateStats();
+  renderInfoPanel();
+  document.getElementById('replyInput').focus();
+}
+
+/* ============================================================
+   APPEND MESSAGE / NOTE TO VIEW
+============================================================ */
+function appendMessageToView(m, scroll=true) {
+  const area = document.getElementById('messagesArea');
+  const isAgent = m.autor !== 'cliente' && m.autor !== 'sistema';
+  const isSystem = m.autor === 'sistema';
+  const row = document.createElement('div');
+  if (isSystem) {
+    row.className = 'msg-row from-system';
+    row.innerHTML = `<div class="msg-bubble-wrap"><div class="msg-bubble">${m.texto}</div></div>`;
+  } else {
+    row.className = `msg-row ${isAgent ? 'from-agent' : 'from-client'}`;
+    row.innerHTML = `
+      <div class="msg-av-sm">${isAgent ? '🧑‍💼' : '🙋'}</div>
+      <div class="msg-bubble-wrap">
+        <div class="msg-bubble">${m.texto}</div>
+        <div class="msg-time">${isAgent ? m.autor + ' · ' : ''}${formatTime(m.creado_at)}</div>
+      </div>`;
+  }
+  area.appendChild(row);
+  if (scroll) area.scrollTop = area.scrollHeight;
+}
+
+function appendNoteToView(n, scroll=true) {
+  const area = document.getElementById('messagesArea');
+  const row = document.createElement('div');
+  const isSupNote = n.tipo === 'supervisor_note';
+  row.className = `msg-row ${isSupNote ? 'from-supervisor' : 'from-note'}`;
+  const labelText = isSupNote ? `🛡️ Nota Supervisor · ${n.autor}` : `📝 Nota interna · ${n.autor}`;
+  const labelClass = isSupNote ? 'supervisor-note-label' : 'note-label';
+  row.innerHTML = `
+    <div class="msg-av-sm">${isSupNote ? '🛡️' : '📝'}</div>
+    <div class="msg-bubble-wrap">
+      <div class="${labelClass}">${labelText}</div>
+      <div class="msg-bubble">${n.texto}</div>
+      <div class="msg-time">${formatTime(n.creado_at)}</div>
+    </div>`;
+  area.appendChild(row);
+  if (scroll) area.scrollTop = area.scrollHeight;
+}
+
+/* ============================================================
+   REPLY MODE (chat vs note)
+============================================================ */
+function setReplyMode(mode) {
+  replyMode = mode;
+  const input = document.getElementById('replyInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const qr = document.getElementById('quickRepliesBar');
+  document.getElementById('replyTabChat').classList.toggle('active', mode === 'chat');
+  document.getElementById('replyTabNote').classList.toggle('active', mode === 'note');
+  if (mode === 'chat') {
+    input.placeholder = 'Escribe tu respuesta… (/ para respuestas guardadas)';
+    input.classList.remove('note-mode');
+    sendBtn.classList.remove('note-mode');
+    qr.style.display = 'flex';
+  } else {
+    input.placeholder = '📝 Escribe una nota interna (solo el equipo la ve)…';
+    input.classList.add('note-mode');
+    sendBtn.classList.add('note-mode');
+    qr.style.display = 'none';
+    hideCannedPopup();
+  }
+  input.focus();
+}
+
+/* ============================================================
+   CANNED RESPONSES
+============================================================ */
+function handleInputChange(el) {
+  autoResize(el);
+  if (replyMode !== 'chat') return;
+  const val = el.value;
+  if (val.startsWith('/')) {
+    const query = val.slice(1).toLowerCase();
+    const filtered = query ? CANNED.filter(c => c.key.includes(query) || c.title.toLowerCase().includes(query)) : CANNED;
+    showCannedPopup(filtered);
+  } else {
+    hideCannedPopup();
+  }
+}
+function showCannedPopup(items) {
+  const popup = document.getElementById('cannedPopup');
+  const list = document.getElementById('cannedList');
+  if (items.length === 0) { hideCannedPopup(); return; }
+  list.innerHTML = items.map((c,i) => `
+    <div class="canned-item" onclick="selectCanned(${CANNED.indexOf(c)})">
+      <div class="canned-item-title">/${c.key} — ${c.title}</div>
+      <div class="canned-item-text">${c.text}</div>
+    </div>`).join('');
+  popup.classList.add('open');
+}
+function hideCannedPopup() {
+  document.getElementById('cannedPopup').classList.remove('open');
+}
+function selectCanned(idx) {
+  document.getElementById('replyInput').value = CANNED[idx].text;
+  hideCannedPopup();
+  document.getElementById('replyInput').focus();
+}
+
+/* ============================================================
+   SEND REPLY / NOTE
+============================================================ */
+async function sendReply() {
+  if (!activeSession) return;
+  const input = document.getElementById('replyInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  autoResize(input);
+  hideCannedPopup();
+
+  if (replyMode === 'note') {
+    // Internal note - save locally only
+    const note = {
+      id: 'note_' + Date.now(),
+      sesion_id: activeSession,
+      autor: currentAgent.name,
+      texto: text,
+      creado_at: new Date().toISOString(),
+      tipo: 'nota'
+    };
+    sessions[activeSession].notes.push(note);
+    appendNoteToView(note);
+    totalNotes++;
+    updateStats();
+    showToast('📝 Nota interna guardada');
+    return;
+  }
+
+  const msg = { sesion_id: activeSession, autor: currentAgent.name, texto: text };
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/mensajes`, {
+      method:'POST',
+      headers:{ 'apikey':SUPA_KEY, 'Authorization':`Bearer ${SUPA_KEY}`, 'Content-Type':'application/json', 'Prefer':'return=representation' },
+      body: JSON.stringify(msg)
+    });
+    const data = await res.json();
+    if (data && data[0]) { processMessage(data[0], false); appendMessageToView(data[0]); }
+  } catch(e) { showToast('❌ Error al enviar mensaje', true); }
+}
+
+function handleInputKey(e) {
+  const popup = document.getElementById('cannedPopup');
+  if (popup.classList.contains('open') && e.key === 'Escape') { e.preventDefault(); hideCannedPopup(); return; }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply(); }
+}
+
+function insertQuick(text) {
+  document.getElementById('replyInput').value = text;
+  document.getElementById('replyInput').focus();
+}
+
+/* ============================================================
+   INFO PANEL
+============================================================ */
+function setInfoTab(tab) {
+  currentInfoTab = tab;
+  ['visitor','history','notes'].forEach(t => {
+    document.getElementById(`itab-${t}`).classList.toggle('active', t === tab);
+  });
+  renderInfoPanel();
+}
+
+function renderInfoPanel() {
+  if (!activeSession) return;
+  const s = sessions[activeSession];
+  const body = document.getElementById('infoPanelBody');
+
+  if (currentInfoTab === 'visitor') {
+    const v = s.visitorInfo || {};
+    const timeOnSite = getElapsed(s.visitorInfo?.startTime || s.msgs[0]?.creado_at);
+    body.innerHTML = `
+      <div class="info-section">
+        <div class="info-section-title">Información</div>
+        <div class="info-row"><div class="info-icon">📍</div><div><div class="info-label">Ubicación</div><div class="info-value">${v.location||'—'}</div></div></div>
+        <div class="info-row"><div class="info-icon">🌐</div><div><div class="info-label">Navegador</div><div class="info-value">${v.browser||'—'}</div></div></div>
+        <div class="info-row"><div class="info-icon">💻</div><div><div class="info-label">Sistema</div><div class="info-value">${v.os||'—'}</div></div></div>
+        <div class="info-row"><div class="info-icon">🔌</div><div><div class="info-label">IP</div><div class="info-value">${v.ip||'—'}</div></div></div>
+        <div class="info-row"><div class="info-icon">⏱</div><div><div class="info-label">Tiempo en sesión</div><div class="info-value">${timeOnSite.label}</div></div></div>
+      </div>
+      <div class="info-section">
+        <div class="info-section-title">Asignar agente</div>
+        <select class="assign-select" onchange="assignAgent('${activeSession}', this.value)">
+          <option value="">Sin asignar</option>
+          ${Object.entries(AGENTS).map(([id,a])=>`<option value="${id}" ${s.assignedTo===id?'selected':''}>${a.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="info-section">
+        <div class="info-section-title">Etiquetas</div>
+        <div class="tags-wrap" id="tagsWrap">
+          ${renderTagChips(activeSession)}
+          <div class="tag-add-btn" onclick="toggleTagSelector('${activeSession}')">+ Etiqueta</div>
+        </div>
+        <div class="tag-selector" id="tagSelector">
+          ${TAG_DEFS.map(t=>`
+            <div class="tag-option" onclick="toggleTag('${activeSession}','${t.id}')">
+              <div class="tag-dot" style="background:${t.color}"></div>
+              <span style="font-size:12px;">${t.label}</span>
+              ${s.tags.includes(t.id) ? '<span style="margin-left:auto;color:var(--green)">✓</span>' : ''}
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="info-section">
+        <div class="info-section-title">Páginas visitadas</div>
+        ${(v.pages||[]).map(p=>`
+          <div class="page-item">
+            <div class="page-bullet"></div>
+            <div><div class="page-item-url">${p}</div><div class="page-item-time">Esta sesión</div></div>
+          </div>`).join('') || '<div style="font-size:12px;color:var(--gray2)">Sin datos</div>'}
+      </div>`;
+  } else if (currentInfoTab === 'history') {
+    body.innerHTML = `
+      <div class="info-section">
+        <div class="info-section-title">Conversaciones anteriores</div>
+        <div class="prev-chat">
+          <div class="prev-chat-date">Hace 3 días</div>
+          <div class="prev-chat-preview">Consulta sobre tiempo de entrega del pedido #4872</div>
+        </div>
+        <div class="prev-chat">
+          <div class="prev-chat-date">Hace 1 semana</div>
+          <div class="prev-chat-preview">Problema con inicio de sesión en la cuenta</div>
+        </div>
+        <div class="prev-chat">
+          <div class="prev-chat-date">Hace 2 semanas</div>
+          <div class="prev-chat-preview">Solicitud de reembolso orden #4201</div>
+        </div>
+      </div>
+      <div class="info-section">
+        <div class="info-section-title">Resumen</div>
+        <div class="info-row"><div class="info-icon">💬</div><div><div class="info-label">Total chats</div><div class="info-value">4</div></div></div>
+        <div class="info-row"><div class="info-icon">✅</div><div><div class="info-label">Resueltos</div><div class="info-value">3</div></div></div>
+        <div class="info-row"><div class="info-icon">⭐</div><div><div class="info-label">Satisfacción</div><div class="info-value">4.2 / 5</div></div></div>
+      </div>`;
+  } else if (currentInfoTab === 'notes') {
+    const notes = sessions[activeSession]?.notes || [];
+    body.innerHTML = `
+      <div class="info-section">
+        <div class="info-section-title">Notas internas (${notes.length})</div>
+        ${notes.length === 0
+          ? '<div style="font-size:12px;color:var(--gray2);text-align:center;padding:20px 0;">Sin notas. Usa la pestaña <b>Nota interna</b> en el chat.</div>'
+          : notes.map(n=>`
+            <div style="background:var(--orange-dim);border:1px solid rgba(255,140,0,0.2);border-radius:8px;padding:9px 11px;margin-bottom:8px;">
+              <div style="font-size:10px;color:var(--orange);font-weight:700;margin-bottom:4px;">📝 ${n.autor} · ${formatTime(n.creado_at)}</div>
+              <div style="font-size:12px;color:var(--white)">${n.texto}</div>
+            </div>`).join('')}
+      </div>`;
+  }
+}
+
+/* Tags */
+function renderTagChips(sid) {
+  const s = sessions[sid];
+  return s.tags.map(tid => {
+    const td = TAG_DEFS.find(t=>t.id===tid);
+    return td ? `<span class="tag-chip" style="background:${td.bg};color:${td.color}">${td.label} <span class="tag-x" onclick="event.stopPropagation();removeTag('${sid}','${tid}')">✕</span></span>` : '';
+  }).join('');
+}
+function toggleTagSelector(sid) {
+  document.getElementById('tagSelector').classList.toggle('open');
+}
+function toggleTag(sid, tagId) {
+  const s = sessions[sid];
+  const idx = s.tags.indexOf(tagId);
+  if (idx === -1) s.tags.push(tagId); else s.tags.splice(idx, 1);
+  renderInfoPanel();
+  renderConvList();
+}
+function removeTag(sid, tagId) {
+  const s = sessions[sid];
+  s.tags = s.tags.filter(t => t !== tagId);
+  renderInfoPanel();
+  renderConvList();
+}
+function assignAgent(sid, agentId) {
+  sessions[sid].assignedTo = agentId || null;
+  // Persist assignments in localStorage so they survive page reloads on mobile
+  try {
+    const stored = JSON.parse(localStorage.getItem('cordialito_assignments') || '{}');
+    if (agentId) stored[sid] = agentId; else delete stored[sid];
+    localStorage.setItem('cordialito_assignments', JSON.stringify(stored));
+  } catch(e) {}
+  renderConvList();
+  renderInfoPanel();
+  showToast(agentId ? `👤 Asignado a ${AGENTS[agentId]?.name}` : '🔓 Chat sin asignar');
+}
+
+function loadPersistedAssignments() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('cordialito_assignments') || '{}');
+    Object.entries(stored).forEach(([sid, agentId]) => {
+      if (sessions[sid]) sessions[sid].assignedTo = agentId;
+    });
+  } catch(e) {}
+}
+
+/* ============================================================
+   RESOLVE / TRANSFER / CLOSE
+============================================================ */
+function confirmClose(source, sid) {
+  const targetSid = sid || activeSession;
+  if (!targetSid) return;
+  pendingModalAction = { type:'close', sid:targetSid };
+  document.getElementById('modalIcon').textContent = '✕';
+  document.getElementById('modalTitle').textContent = '¿Cerrar esta conversación?';
+  document.getElementById('modalSub').textContent = 'La conversación se retirará de tu lista. El cliente podrá iniciar un nuevo chat.';
+  document.getElementById('modalConfirmBtn').className = 'modal-btn confirm-red';
+  document.getElementById('modalConfirmBtn').textContent = 'Sí, cerrar';
+  document.getElementById('confirmModal').classList.add('open');
+}
+function resolveChat() {
+  if (!activeSession) return;
+  pendingModalAction = { type:'resolve', sid:activeSession };
+  document.getElementById('modalIcon').textContent = '✅';
+  document.getElementById('modalTitle').textContent = '¿Marcar como resuelto?';
+  document.getElementById('modalSub').textContent = 'Se enviará un mensaje de cierre al cliente y la conversación quedará resuelta.';
+  document.getElementById('modalConfirmBtn').className = 'modal-btn confirm-green';
+  document.getElementById('modalConfirmBtn').textContent = 'Sí, resolver';
+  document.getElementById('confirmModal').classList.add('open');
+}
+function transferChat() {
+  if (!activeSession) return;
+  pendingModalAction = { type:'transfer', sid:activeSession };
+  document.getElementById('modalIcon').textContent = '🔀';
+  document.getElementById('modalTitle').textContent = '¿Transferir chat?';
+  document.getElementById('modalSub').textContent = 'El chat será transferido a otro agente disponible.';
+  document.getElementById('modalConfirmBtn').className = 'modal-btn';
+  document.getElementById('modalConfirmBtn').style.background = 'var(--blue-dim)';
+  document.getElementById('modalConfirmBtn').style.borderColor = 'rgba(59,130,246,0.35)';
+  document.getElementById('modalConfirmBtn').style.color = 'var(--blue)';
+  document.getElementById('modalConfirmBtn').textContent = 'Sí, transferir';
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('open');
+  pendingModalAction = null;
+}
+async function executeModalAction() {
+  if (!pendingModalAction) return;
+  const { type, sid, id } = pendingModalAction;
+  closeModal();
+
+  if (type === 'close') {
+    if (activeSession === sid) { activeSession = null; showNoChatView(); }
+    // Clean up persisted assignment for this session
+    try {
+      const stored = JSON.parse(localStorage.getItem('cordialito_assignments') || '{}');
+      delete stored[sid];
+      localStorage.setItem('cordialito_assignments', JSON.stringify(stored));
+    } catch(e) {}
+    delete sessions[sid];
+    renderConvList(); updateStats();
+    showToast('✕ Conversación cerrada');
+  } else if (type === 'resolve') {
+    await sendSystemMsg('✅ Chat marcado como resuelto. ¡Gracias por contactar a Cordialito!');
+    resolvedToday++;
+    // Clean up persisted assignment
+    try {
+      const stored = JSON.parse(localStorage.getItem('cordialito_assignments') || '{}');
+      delete stored[activeSession];
+      localStorage.setItem('cordialito_assignments', JSON.stringify(stored));
+    } catch(e) {}
+    delete sessions[activeSession];
+    activeSession = null;
+    showNoChatView();
+    renderConvList(); updateStats();
+    showToast('✅ Chat resuelto');
+  } else if (type === 'transfer') {
+    await sendSystemMsg('🔀 Tu chat ha sido transferido a otro agente. Un momento por favor.');
+    showToast('🔀 Chat transferido');
+  } else if (type === 'deleteAgent') {
+    const name = AGENTS_DB[id]?.name;
+    delete AGENTS_DB[id];
+    renderAgentTable();
+    renderAdminDashboard();
+    showToast(`🗑️ Agente ${name} eliminado`);
+  }
+}
+
+function showNoChatView() {
+  document.getElementById('noChatMsg').style.display = 'flex';
+  document.getElementById('chatView').style.display = 'none';
+  document.getElementById('infoPanelBody').innerHTML = '<div style="text-align:center;color:var(--gray2);font-size:13px;padding-top:40px;">Selecciona un chat</div>';
+}
+
+document.getElementById('confirmModal').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+
+async function sendSystemMsg(text) {
+  if (!activeSession) return;
+  await fetch(`${SUPA_URL}/rest/v1/mensajes`, {
+    method:'POST',
+    headers:{ 'apikey':SUPA_KEY, 'Authorization':`Bearer ${SUPA_KEY}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ sesion_id: activeSession, autor:'sistema', texto:text })
+  });
+}
+
+/* ============================================================
+   UTILS
+============================================================ */
+function formatTime(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+function getElapsed(ts) {
+  if (!ts) return { label:'—', mins:0 };
+  const diff = Math.floor((Date.now()-new Date(ts))/1000);
+  if (diff < 60) return { label:'Ahora', mins:0 };
+  const mins = Math.floor(diff/60);
+  if (mins < 60) return { label:`Hace ${mins}m`, mins };
+  return { label:`Hace ${Math.floor(mins/60)}h`, mins };
+}
+function updateStats() {
+  const keys = Object.keys(sessions);
+  const unread = keys.filter(k=>sessions[k].unread>0).length;
+  document.getElementById('statActive').textContent = keys.length;
+  document.getElementById('statUnread').textContent = unread;
+  document.getElementById('statResolved').textContent = resolvedToday;
+  document.getElementById('statNotes').textContent = totalNotes;
+}
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockDisplay').textContent =
+    now.toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) +
+    ' · ' + now.toLocaleDateString('es-VE',{weekday:'short',day:'numeric',month:'short'});
+}
+setInterval(()=>{ if(Object.keys(sessions).length>0) renderConvList(); }, 60000);
+
+/* ============================================================
+   ADMIN PANEL
+============================================================ */
+let adminSectionCurrent = 'dashboard';
+let editingAgentId = null;
+let adminRefreshTimer = null;
+
+function openAdminPanel() {
+  const panel = document.getElementById('adminPanel');
+  panel.style.display = 'flex';
+  panel.style.flexDirection = 'column';
+  document.getElementById('adminDisplayName').textContent = currentAgent.name;
+  adminSection('dashboard');
+  setInterval(updateAdminClock, 1000);
+  updateAdminClock();
+  if (!adminRefreshTimer) adminRefreshTimer = setInterval(refreshAdminData, 3000);
+  loadExistingMessages().then(() => {
+    loadPersistedAssignments();
+    subscribeRealtime();
+  });
+}
+
+function updateAdminClock() {
+  const el = document.getElementById('adminClock');
+  if (el) el.textContent = new Date().toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function adminSection(sec) {
+  adminSectionCurrent = sec;
+  ['dashboard','agents','monitor','search'].forEach(s => {
+    const el = document.getElementById(`asec-${s}`);
+    if (s === sec) {
+      el.style.display = s === 'monitor' ? 'flex' : 'block';
+      el.style.flex = s === 'monitor' ? '1' : '';
+      el.style.overflow = s === 'monitor' ? 'hidden' : '';
+      el.style.padding = s === 'monitor' ? '0' : '';
+    } else {
+      el.style.display = 'none';
+    }
+    document.getElementById(`anav-${s}`).classList.toggle('active', s === sec);
+  });
+  if (sec === 'dashboard') renderAdminDashboard();
+  if (sec === 'agents') renderAgentTable();
+  if (sec === 'monitor') renderMonitor();
+  if (sec === 'search') { document.getElementById('admSearchResults').innerHTML = ''; document.getElementById('admSearchInput').value = ''; document.getElementById('admSearchInput').focus(); }
+}
+
+function refreshAdminData() {
+  if (adminSectionCurrent === 'dashboard') renderAdminDashboard();
+  if (adminSectionCurrent === 'monitor') {
+    renderMonitorList();
+    // Refresh viewer if a chat is open and has new messages
+    if (monitorActiveSid && sessions[monitorActiveSid]) {
+      renderMonitorViewer(monitorActiveSid);
+    }
+  }
+  const badge = document.getElementById('monitorBadge');
+  const count = Object.keys(sessions).length;
+  badge.textContent = count;
+  badge.classList.toggle('visible', count > 0);
+}
+
+/* ── DASHBOARD ── */
+function renderAdminDashboard() {
+  const allSessions = Object.values(sessions);
+  const unread = allSessions.filter(s => s.unread > 0).length;
+  const onlineAgents = Object.values(AGENTS_DB).filter(a => a.status === 'online' && a.role === 'agent').length;
+  document.getElementById('kpi-active').textContent = allSessions.length;
+  document.getElementById('kpi-agents').textContent = onlineAgents;
+  document.getElementById('kpi-unread').textContent = unread;
+  document.getElementById('kpi-resolved').textContent = resolvedToday;
+
+  const container = document.getElementById('admAgentStatus');
+  const agents = Object.entries(AGENTS_DB).filter(([,a]) => a.role === 'agent');
+  if (agents.length === 0) {
+    container.innerHTML = '<div style="color:var(--gray2);font-size:13px;">No hay agentes registrados.</div>';
+    return;
+  }
+  container.innerHTML = agents.map(([id, a]) => {
+    const mySessions = Object.values(sessions).filter(s => s.assignedTo === id);
+    const statusColor = a.status === 'online' ? 'var(--green)' : a.status === 'away' ? 'var(--gold)' : 'var(--gray2)';
+    const statusLabel = a.status === 'online' ? 'En línea' : a.status === 'away' ? 'Ausente' : 'Desconectado';
+    return `
+    <div class="adm-agent-card">
+      <div class="adm-agent-av">🧑‍💼<div class="adm-agent-status-dot" style="background:${statusColor}"></div></div>
+      <div class="adm-agent-info">
+        <div class="adm-agent-name">${a.name}</div>
+        <div class="adm-agent-meta" style="color:${statusColor}">● ${statusLabel} · @${id}</div>
+      </div>
+      <div class="adm-agent-stats">
+        <div class="adm-agent-stat"><div class="adm-agent-stat-val">${mySessions.length}</div><div class="adm-agent-stat-label">Chats activos</div></div>
+        <div class="adm-agent-stat"><div class="adm-agent-stat-val" style="color:var(--green)">${a.resueltosHoy||0}</div><div class="adm-agent-stat-label">Resueltos hoy</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── AGENT TABLE ── */
+function renderAgentTable() {
+  const entries = Object.entries(AGENTS_DB);
+  document.getElementById('admAgentTable').innerHTML = `
+    <table class="adm-table">
+      <thead><tr>
+        <th>Agente</th><th>Usuario</th><th>Rol</th><th>Estado</th>
+        <th>Contraseña</th><th>Registrado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>
+        ${entries.map(([id, a]) => `
+        <tr>
+          <td><div style="font-weight:700;color:var(--white)">${a.name}</div></td>
+          <td><div style="font-family:monospace;color:var(--gray);font-size:12px">@${id}</div></td>
+          <td><span class="adm-role-badge ${a.role}">${a.role==='admin'?'🛡️ Admin':'🧑 Agente'}</span></td>
+          <td><span style="font-size:11px;font-weight:600;color:${a.status==='online'?'var(--green)':a.status==='away'?'var(--gold)':'var(--gray2)'}">● ${a.status==='online'?'En línea':a.status==='away'?'Ausente':'Desconectado'}</span></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input class="adm-pass-field" type="password" id="pass-${id}" value="${a.pass}" />
+              <span onclick="togglePassVis('pass-${id}',this)" style="cursor:pointer;font-size:14px;color:var(--gray2)">👁</span>
+              <button class="adm-btn adm-btn-green" onclick="saveAgentPass('${id}')" style="font-size:11px;padding:4px 8px;">✓</button>
+            </div>
+          </td>
+          <td style="font-size:11px;color:var(--gray2)">${a.createdAt||'—'}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button class="adm-btn adm-btn-gray" onclick="openAgentModal('${id}')">✏️ Editar</button>
+              ${id !== currentAgent.id ? `<button class="adm-btn adm-btn-red" onclick="confirmDeleteAgent('${id}')">🗑</button>` : '<span style="font-size:11px;color:var(--gray2);padding:4px 0;">(tú)</span>'}
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function saveAgentPass(id) {
+  const newPass = document.getElementById(`pass-${id}`).value.trim();
+  if (!newPass || newPass.length < 4) { showToast('⚠️ Contraseña demasiado corta', true); return; }
+  AGENTS_DB[id].pass = newPass;
+  showToast(`🔑 Contraseña de ${AGENTS_DB[id].name} actualizada`);
+}
+
+function togglePassVis(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? '👁' : '🙈';
+}
+
+/* ── AGENT MODAL ── */
+function openAgentModal(editId) {
+  editingAgentId = editId || null;
+  document.getElementById('agentModalErr').style.display = 'none';
+  if (editId) {
+    const a = AGENTS_DB[editId];
+    document.getElementById('agentModalIcon').textContent = '✏️';
+    document.getElementById('agentModalTitle').textContent = `Editar: ${a.name}`;
+    document.getElementById('amName').value = a.name;
+    document.getElementById('amUser').value = editId;
+    document.getElementById('amUser').disabled = true;
+    document.getElementById('amPass').value = a.pass;
+    document.getElementById('amRole').value = a.role;
+  } else {
+    document.getElementById('agentModalIcon').textContent = '👤';
+    document.getElementById('agentModalTitle').textContent = 'Nuevo agente';
+    document.getElementById('amName').value = '';
+    document.getElementById('amUser').value = '';
+    document.getElementById('amUser').disabled = false;
+    document.getElementById('amPass').value = '';
+    document.getElementById('amRole').value = 'agent';
+  }
+  document.getElementById('agentModal').classList.add('open');
+}
+
+function closeAgentModal() {
+  document.getElementById('agentModal').classList.remove('open');
+  editingAgentId = null;
+}
+
+function saveAgent() {
+  const name = document.getElementById('amName').value.trim();
+  const user = document.getElementById('amUser').value.trim().toLowerCase().replace(/\s+/g,'');
+  const pass = document.getElementById('amPass').value.trim();
+  const role = document.getElementById('amRole').value;
+  const errEl = document.getElementById('agentModalErr');
+  if (!name || !user || !pass) { errEl.textContent = 'Completa todos los campos'; errEl.style.display = 'block'; return; }
+  if (!editingAgentId && AGENTS_DB[user]) { errEl.textContent = 'Ese usuario ya existe'; errEl.style.display = 'block'; return; }
+  if (pass.length < 4) { errEl.textContent = 'Contraseña mínimo 4 caracteres'; errEl.style.display = 'block'; return; }
+  if (editingAgentId) {
+    AGENTS_DB[editingAgentId] = { ...AGENTS_DB[editingAgentId], name, pass, role };
+    showToast(`✅ Agente ${name} actualizado`);
+  } else {
+    AGENTS_DB[user] = { pass, name, role, status:'offline', chatsHoy:0, resueltosHoy:0, createdAt: new Date().toISOString().split('T')[0] };
+    showToast(`✅ Agente ${name} creado`);
+  }
+  closeAgentModal();
+  renderAgentTable();
+  renderAdminDashboard();
+}
+
+function confirmDeleteAgent(id) {
+  const a = AGENTS_DB[id];
+  pendingModalAction = { type:'deleteAgent', id };
+  document.getElementById('modalIcon').textContent = '🗑️';
+  document.getElementById('modalTitle').textContent = `¿Eliminar a ${a.name}?`;
+  document.getElementById('modalSub').textContent = `El usuario @${id} será eliminado permanentemente.`;
+  document.getElementById('modalConfirmBtn').className = 'modal-btn confirm-red';
+  document.getElementById('modalConfirmBtn').textContent = 'Sí, eliminar';
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+/* ── MONITOR ── */
+let monitorActiveSid = null;
+
+function renderMonitor() {
+  renderMonitorList();
+  if (monitorActiveSid && sessions[monitorActiveSid]) {
+    renderMonitorViewer(monitorActiveSid);
+  } else {
+    monitorActiveSid = null;
+    document.getElementById('monitorViewerEmpty').style.display = 'flex';
+    document.getElementById('monitorChatPane').style.display = 'none';
+  }
+}
+
+function renderMonitorList() {
+  const q = (document.getElementById('monitorSearch')?.value || '').toLowerCase();
+  const sids = Object.keys(sessions).filter(sid => {
+    if (!q) return true;
+    const s = sessions[sid];
+    return s.clientName.toLowerCase().includes(q) || sid.toLowerCase().includes(q);
+  });
+  const count = Object.keys(sessions).length;
+  const countEl = document.getElementById('monitorCount');
+  if (countEl) countEl.textContent = count;
+
+  const container = document.getElementById('monitorCards');
+  if (!container) return;
+
+  if (sids.length === 0) {
+    container.innerHTML = '<div class="adm-monitor-empty" style="padding:32px 16px;font-size:13px;">💬 Sin chats activos</div>';
+    return;
+  }
+
+  const sorted = sids.sort((a,b) => (sessions[b].unread||0) - (sessions[a].unread||0) || new Date(sessions[b].lastTime) - new Date(sessions[a].lastTime));
+
+  container.innerHTML = sorted.map(sid => {
+    const s = sessions[sid];
+    // Skip SUPNOTE messages for preview (they are internal notes)
+    const visibleMsgs = s.msgs.filter(m => !m.autor || !m.autor.startsWith('SUPNOTE:'));
+    const last = visibleMsgs[visibleMsgs.length-1];
+    const preview = last ? last.texto.substring(0,38) : '—';
+    const time = last ? formatTime(last.creado_at) : '';
+    const unread = s.unread > 0;
+    const isActive = monitorActiveSid === sid;
+    const elapsed = getElapsed(s.lastTime);
+    const elapsedClass = elapsed.mins > 15 ? 'very-late' : elapsed.mins > 5 ? 'late' : '';
+    const assigned = s.assignedTo ? AGENTS_DB[s.assignedTo]?.name || s.assignedTo : 'Sin asignar';
+    const tagsHtml = s.tags.map(tid => {
+      const td = TAG_DEFS.find(t=>t.id===tid);
+      return td ? `<span class="conv-tag" style="background:${td.bg};color:${td.color}">${td.label}</span>` : '';
+    }).join('');
+    // Count supervisor notes
+    const supNotes = (s.notes||[]).filter(n=>n.tipo==='supervisor_note').length;
+    const supNotesBadge = supNotes > 0 ? `<span style="font-size:9px;background:var(--purple-dim);color:var(--purple);border-radius:4px;padding:1px 5px;font-weight:700;">🛡️ ${supNotes}</span>` : '';
+    return `
+    <div class="monitor-card ${isActive?'active':''} ${unread?'has-unread':''}" onclick="openMonitorChat('${sid}')">
+      <div class="monitor-card-av">👤<div class="online-dot"></div></div>
+      <div class="monitor-card-info">
+        <div class="monitor-card-top">
+          <div class="monitor-card-name">${s.clientName}</div>
+          <div class="monitor-card-time">${time}</div>
+        </div>
+        <div class="monitor-card-preview">${preview}${preview.length===38?'…':''}</div>
+        <div class="monitor-card-meta">
+          <span style="font-size:10px;color:var(--gray2);">👤 ${assigned}</span>
+          ${tagsHtml}${supNotesBadge}
+          <span class="conv-item-elapsed ${elapsedClass}">⏱ ${elapsed.label}</span>
+        </div>
+      </div>
+      ${unread ? `<div class="monitor-unread-badge">${s.unread}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openMonitorChat(sid) {
+  monitorActiveSid = sid;
+  renderMonitorList(); // refresh active state
+  renderMonitorViewer(sid);
+}
+
+function renderMonitorViewer(sid) {
+  const s = sessions[sid];
+  if (!s) return;
+  const assigned = s.assignedTo ? AGENTS_DB[s.assignedTo]?.name || s.assignedTo : 'Sin asignar';
+  const elapsed = getElapsed(s.lastTime);
+  const tagsHtml = s.tags.map(tid => {
+    const td = TAG_DEFS.find(t=>t.id===tid);
+    return td ? `<span class="monitor-hdr-tag" style="background:${td.bg};color:${td.color}">${td.label}</span>` : '';
+  }).join('');
+
+  // Header
+  document.getElementById('monitorViewerHeader').innerHTML = `
+    <div style="font-size:22px;">👤</div>
+    <div style="flex:1;">
+      <div class="monitor-viewer-name">${s.clientName} ${tagsHtml}</div>
+      <div class="monitor-viewer-sub">👤 ${assigned} · ⏱ ${elapsed.label} · 💬 ${s.msgs.length} mensajes · 🛡️ ${(s.notes||[]).filter(n=>n.tipo==='supervisor_note').length} notas de supervisor</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <span style="font-size:11px;background:var(--green-dim);border:1px solid rgba(0,232,122,0.3);color:var(--green);border-radius:6px;padding:4px 10px;font-weight:600;">🟢 En vivo</span>
+      ${s.unread > 0 ? `<span style="font-size:11px;background:var(--red-dim);border:1px solid rgba(255,71,87,0.3);color:var(--red);border-radius:6px;padding:4px 10px;font-weight:600;">${s.unread} sin responder</span>` : ''}
+    </div>`;
+
+  // Show pane
+  document.getElementById('monitorViewerEmpty').style.display = 'none';
+  const pane = document.getElementById('monitorChatPane');
+  pane.style.display = 'flex';
+
+  // Build messages: merge msgs + notes and sort by time
+  const area = document.getElementById('monitorMessages');
+  area.innerHTML = '';
+
+  // Combine all messages and notes sorted by date
+  const allItems = [
+    ...s.msgs.map(m => ({ ...m, _type: 'msg' })),
+    ...(s.notes||[]).map(n => ({ ...n, _type: 'note' }))
+  ].sort((a,b) => new Date(a.creado_at) - new Date(b.creado_at));
+
+  let lastDate = '';
+  allItems.forEach(item => {
+    const d = new Date(item.creado_at).toLocaleDateString('es-VE',{day:'numeric',month:'long'});
+    if (d !== lastDate) {
+      lastDate = d;
+      const div = document.createElement('div');
+      div.className = 'monitor-msg-divider';
+      div.textContent = d;
+      area.appendChild(div);
+    }
+    if (item._type === 'msg') {
+      appendMonitorMessage(item, area);
+    } else {
+      appendMonitorNote(item, area);
+    }
+  });
+
+  area.scrollTop = area.scrollHeight;
+  document.getElementById('monitorNoteInput').focus();
+}
+
+function appendMonitorMessage(m, area) {
+  const isAgent = m.autor !== 'cliente' && m.autor !== 'sistema';
+  const isSystem = m.autor === 'sistema';
+  const row = document.createElement('div');
+  if (isSystem) {
+    row.className = 'msg-row from-system';
+    row.innerHTML = `<div class="msg-bubble-wrap"><div class="msg-bubble">${m.texto}</div></div>`;
+  } else {
+    row.className = `msg-row ${isAgent ? 'from-agent' : 'from-client'}`;
+    row.innerHTML = `
+      <div class="msg-av-sm">${isAgent ? '🧑‍💼' : '🙋'}</div>
+      <div class="msg-bubble-wrap">
+        <div class="msg-bubble">${m.texto}</div>
+        <div class="msg-time">${isAgent ? m.autor + ' · ' : ''}${formatTime(m.creado_at)}</div>
+      </div>`;
+  }
+  area.appendChild(row);
+}
+
+function appendMonitorNote(n, area) {
+  const isSupNote = n.tipo === 'supervisor_note';
+  const row = document.createElement('div');
+  row.className = `msg-row ${isSupNote ? 'from-supervisor' : 'from-note'}`;
+  const labelText = isSupNote ? `🛡️ Nota Supervisor · ${n.autor}` : `📝 Nota Interna · ${n.autor}`;
+  const labelClass = isSupNote ? 'supervisor-note-label' : 'note-label';
+  row.innerHTML = `
+    <div class="msg-av-sm">${isSupNote ? '🛡️' : '📝'}</div>
+    <div class="msg-bubble-wrap">
+      <div class="${labelClass}">${labelText}</div>
+      <div class="msg-bubble">${n.texto}</div>
+      <div class="msg-time">${formatTime(n.creado_at)}</div>
+    </div>`;
+  area.appendChild(row);
+}
+
+async function sendSupervisorNote() {
+  const input = document.getElementById('monitorNoteInput');
+  const text = input.value.trim();
+  if (!text || !monitorActiveSid || !sessions[monitorActiveSid]) return;
+  input.value = '';
+  autoResize(input);
+
+  const btn = document.querySelector('.monitor-note-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+  try {
+    // Save to Supabase — autor uses SUPNOTE: prefix so polling distributes to all clients
+    const res = await fetch(`${SUPA_URL}/rest/v1/mensajes`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': `Bearer ${SUPA_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        sesion_id: monitorActiveSid,
+        autor: 'SUPNOTE:' + currentAgent.name,
+        texto: text
+      })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    const [saved] = await res.json();
+    // processMessage will pick it up and render it for everyone via polling
+    // But also render immediately for the supervisor without waiting for next poll
+    processMessage(saved, true);
+    renderMonitorViewer(monitorActiveSid);
+    input.focus();
+    showToast('🛡️ Nota de supervisor enviada');
+    renderMonitorList();
+  } catch(e) {
+    console.error('[SuperNote]', e);
+    showToast('❌ Error al enviar nota: ' + e.message, true);
+    input.value = text; // restore text on failure
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Enviar'; }
+  }
+}
+
+/* ── SEARCH ── */
+function runAdminSearch() {
+  const q = document.getElementById('admSearchInput').value.trim().toLowerCase();
+  const container = document.getElementById('admSearchResults');
+  if (q.length < 2) { container.innerHTML = '<div class="adm-search-empty" style="padding:20px 0;">Escribe al menos 2 caracteres para buscar</div>'; return; }
+
+  const byAgent  = document.getElementById('sf-agent').checked;
+  const byClient = document.getElementById('sf-client').checked;
+  const byContent= document.getElementById('sf-content').checked;
+  const results = [];
+
+  if (byAgent) {
+    Object.entries(AGENTS_DB).forEach(([id, a]) => {
+      if (id.includes(q) || a.name.toLowerCase().includes(q)) {
+        const ms = Object.values(sessions).filter(s => s.assignedTo === id).length;
+        results.push({ type:'agent', icon:'👤', typeLabel:'Agente', color:'var(--blue)', title:a.name, sub:`@${id} · ${a.role==='admin'?'Administrador':'Agente'} · ${ms} chat(s) activo(s)` });
+      }
+    });
+  }
+
+  Object.entries(sessions).forEach(([sid, s]) => {
+    if (byClient && (s.clientName.toLowerCase().includes(q) || sid.toLowerCase().includes(q))) {
+      const assigned = s.assignedTo ? AGENTS_DB[s.assignedTo]?.name||s.assignedTo : 'Sin asignar';
+      results.push({ type:'session', icon:'💬', typeLabel:'Conversación', color:'var(--gold)', title:s.clientName, sub:`ID: ${sid.substring(0,16)}… · Agente: ${assigned} · ${s.msgs.length} mensajes`, sid });
+    }
+    if (byContent) {
+      s.msgs.filter(m => m.texto.toLowerCase().includes(q)).slice(0,3).forEach(m => {
+        const idx = m.texto.toLowerCase().indexOf(q);
+        const start = Math.max(0, idx - 25);
+        const excerpt = (start > 0 ? '…' : '') + m.texto.substring(start, idx + q.length + 35) + (idx + q.length + 35 < m.texto.length ? '…' : '');
+        results.push({ type:'message', icon:'💬', typeLabel:'Mensaje encontrado', color:'var(--purple)', title:s.clientName, sub:`${m.autor==='cliente'?'Cliente':m.autor}: "${excerpt}"`, sid:s.id });
+      });
+    }
+  });
+
+  if (results.length === 0) {
+    container.innerHTML = `<div class="adm-search-empty">🔍 Sin resultados para "<b>${q}</b>"</div>`;
+    return;
+  }
+
+  function hl(text) {
+    return text.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m => `<span class="adm-search-result-highlight">${m}</span>`);
+  }
+
+  container.innerHTML = `<div style="font-size:12px;color:var(--gray2);margin-bottom:12px;">${results.length} resultado(s) para "<b style="color:var(--white)">${q}</b>"</div>` +
+    results.map(r => `
+    <div class="adm-search-result" onclick="${r.sid ? `adminSection('monitor')` : `adminSection('agents')`}">
+      <div class="adm-search-result-type" style="color:${r.color}">${r.icon} ${r.typeLabel}</div>
+      <div class="adm-search-result-title">${hl(r.title)}</div>
+      <div class="adm-search-result-sub">${hl(r.sub)}</div>
+    </div>`).join('');
+}
+
+// Close agent modal on overlay click / escape
+document.getElementById('agentModal').addEventListener('click', function(e){ if(e.target===this) closeAgentModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('agentModal').classList.contains('open')) closeAgentModal();
+    if (document.getElementById('confirmModal').classList.contains('open')) closeModal();
+  }
+});
+
+let toastTimer;
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = isError ? 'rgba(255,71,87,0.35)' : 'rgba(0,232,122,0.35)';
+  t.style.color = isError ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
